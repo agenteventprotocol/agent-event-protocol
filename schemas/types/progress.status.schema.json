@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/progress.status.schema.json",
+  "title": "AEP payload: progress.status",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "phase": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

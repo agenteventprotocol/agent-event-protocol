@@ -1,0 +1,162 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Agent Event Protocol",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#2563EB"
+  },
+  "favicon": "/favicon.svg",
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/agenteventprotocol"
+      }
+    ]
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "pages": [
+          {
+            "group": "Get started",
+            "pages": [
+              "index",
+              "concepts/what-and-why",
+              "guides/run-the-stack"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/envelope-and-identity",
+              "concepts/taxonomy-tour",
+              "concepts/capture-and-redaction",
+              "concepts/control-profile"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/write-an-adapter",
+              "guides/write-a-consumer",
+              "guides/troubleshoot-the-stack"
+            ]
+          },
+          {
+            "group": "Libraries",
+            "pages": [
+              "guides/sdk-typescript",
+              "guides/sdk-python"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "agents/index",
+              "agents/feature-matrix",
+              "agents/control-matrix",
+              "vendor-surfaces"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/repo-map",
+              "components/relay",
+              "components/cli",
+              "components/sdk",
+              "components/aep-mcp",
+              "components/adapters",
+              "components/bridges",
+              {
+                "group": "Design records",
+                "expanded": false,
+                "pages": [
+                  "components/control-steering-design",
+                  "components/adapter-pi-design",
+                  "components/adapter-opencode-design",
+                  "components/adapter-cline-design",
+                  "components/adapter-kilocode-design",
+                  "components/adapter-hermes-design",
+                  "components/adapter-antigravity-design",
+                  "components/adapter-kimi-code-design",
+                  "components/bridge-acp-design",
+                  "components/bridge-agui-design",
+                  "components/bridge-openhands-design",
+                  "components/bridge-otlp-inbound-design"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Specification",
+        "pages": [
+          {
+            "group": "AEP drafts",
+            "pages": [
+              {
+                "group": "0.1",
+                "tag": "Draft",
+                "expanded": true,
+                "pages": [
+                  "specification/draft/index",
+                  "specification/draft/aep-0001-core-and-envelope",
+                  "specification/draft/aep-0002-taxonomy-and-types",
+                  "specification/draft/aep-0003-bindings-and-lifecycle",
+                  "specification/draft/aep-0004-control-profile",
+                  "specification/draft/aep-0005-bridges",
+                  "specification/draft/aep-0006-structured-input-requests",
+                  "specification/draft/aep-0007-message-stream-subprofile",
+                  "specification/draft/aep-0008-text-answers-and-response-channels",
+                  "specification/draft/aep-0009-assessment"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Community",
+        "pages": [
+          {
+            "group": "Project",
+            "pages": [
+              "community/governance",
+              "community/contributing",
+              "community/versioning",
+              "community/security",
+              "community/code-of-conduct"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Updates",
+        "pages": [
+          "updates"
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/agenteventprotocol"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/attention.resolved.schema.json",
+  "title": "AEP payload: attention.resolved",
+  "type": "object",
+  "properties": {
+    "resolution": {
+      "enum": [
+        "answered",
+        "auto",
+        "dismissed"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  },
+  "required": [
+    "resolution"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/tool.requested.schema.json",
+  "title": "AEP payload: tool.requested",
+  "type": "object",
+  "properties": {
+    "tool": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "call_id": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        }
+      },
+      "x-aep-capture": "metadata",
+      "required": [
+        "name"
+      ]
+    },
+    "args_digest": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "args_redacted": {
+      "type": "object",
+      "x-aep-capture": "redacted"
+    },
+    "args": {
+      "type": "object",
+      "x-aep-capture": "full"
+    }
+  },
+  "required": [
+    "tool"
+  ]
+}

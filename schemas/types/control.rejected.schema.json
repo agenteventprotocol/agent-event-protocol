@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/control.rejected.schema.json",
+  "title": "AEP payload: control.rejected",
+  "type": "object",
+  "properties": {
+    "reason": {
+      "enum": [
+        "unsupported",
+        "unauthorized",
+        "busy",
+        "refused",
+        "invalid"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "detail": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    }
+  },
+  "required": [
+    "reason"
+  ],
+  "$comment": "cause = command id (AEP-0004 \u00a73)"
+}

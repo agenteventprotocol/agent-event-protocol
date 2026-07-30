@@ -1,0 +1,413 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the Cline table (the SUBPROCESS hook generation — ten zod-typed events, verified against the published @cline/shared@0.0.59 dist/hooks/events.d.ts; the extension protobuf generation is out of scope by the design record). Each entry pins the pure hook->events mapping at the adapter default posture (capture metadata): input is one typed stdin payload; expected is an ARRAY of {type, data, subject?, step?} — agent terminals with a typed parent id also close the delegation pair, and the per-turn iteration counter stamps the envelope step (no run.step.* synthesis: the surface exposes no boundary moments). Envelope identity (taskId -> session; REAL run boundaries with adapter-minted run ids; tool pairing by the typed call id) is runtime state, pinned by the reference adapter smoke. OBSERVE-ONLY: nothing maps to attention.* (approvals ride the hub channel, deferred by recorded decision) and hook responses never carry the agent-mutating control fields.",
+ "identity": {
+  "session_from": "taskId",
+  "run_from": null,
+  "$comment": "No run id is exposed; boundaries are REAL (agent_start/agent_resume open, agent_end/agent_abort/agent_error close) and the adapter mints the id. iteration -> envelope step as a plain string."
+ },
+ "hooks": {
+  "agent_start": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "agent_start",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null
+   },
+   "expected": [
+    {
+     "type": "run.started",
+     "data": {
+      "trigger": "user"
+     }
+    }
+   ],
+   "$comment": "REAL run boundary: the subprocess payload carries no typed prompt text — the trigger fact alone opens the run (recorded in the design record banner)"
+  },
+  "agent_start_parented": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "agent_start",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_child",
+    "parent_agent_id": "agent_root"
+   },
+   "expected": [
+    {
+     "type": "delegation.subagent.started",
+     "data": {},
+     "subject": "agent_child"
+    },
+    {
+     "type": "run.started",
+     "data": {
+      "trigger": "user"
+     }
+    }
+   ],
+   "$comment": "a typed parent id opens the delegation pair alongside the run — ids are metadata, the subject is the child agent id"
+  },
+  "agent_resume": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "agent_resume",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null
+   },
+   "expected": [
+    {
+     "type": "run.started",
+     "data": {
+      "trigger": "resume"
+     }
+    }
+   ]
+  },
+  "agent_end": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "agent_end",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "iteration": 3
+   },
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {},
+     "step": "3"
+    }
+   ]
+  },
+  "agent_end_parented": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "agent_end",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_child",
+    "parent_agent_id": "agent_root",
+    "iteration": 2
+   },
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {},
+     "step": "2"
+    },
+    {
+     "type": "delegation.subagent.stopped",
+     "data": {},
+     "subject": "agent_child"
+    }
+   ],
+   "$comment": "the matching terminal closes the delegation pair; iteration stamps the envelope step"
+  },
+  "agent_abort": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "agent_abort",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "reason": "user pressed escape"
+   },
+   "expected": [
+    {
+     "type": "run.cancelled",
+     "data": {
+      "by": "user"
+     }
+    }
+   ],
+   "$comment": "a cancellation, not a failure: run.cancelled by user; the free-text reason is redacted-gated (absent at the default ceiling)"
+  },
+  "agent_error": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "agent_error",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "iteration": 1,
+    "error": {
+     "name": "ApiError",
+     "message": "rate limited"
+    }
+   },
+   "expected": [
+    {
+     "type": "run.failed",
+     "data": {
+      "reason": "ApiError",
+      "error": {
+       "type": "ApiError"
+      }
+     },
+     "step": "1"
+    }
+   ],
+   "$comment": "run.failed with the typed error name; the message is redacted-gated"
+  },
+  "tool_call": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "tool_call",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "iteration": 1,
+    "tool_call": {
+     "id": "call_1",
+     "name": "execute_command",
+     "input": {
+      "command": "npm test"
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "execute_command",
+       "call_id": "call_1"
+      },
+      "args_digest": "9178ac939ad908d8fd89e97596cdc0e5"
+     },
+     "subject": "execute_command",
+     "step": "1"
+    }
+   ]
+  },
+  "tool_result_ok": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "tool_result",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "iteration": 1,
+    "tool_result": {
+     "id": "call_1",
+     "name": "execute_command",
+     "input": {},
+     "output": "ok 42 tests",
+     "durationMs": 812,
+     "startedAt": "2026-07-12T00:00:01.000Z",
+     "endedAt": "2026-07-12T00:00:02.000Z"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "execute_command",
+       "call_id": "call_1"
+      },
+      "duration_ms": 812,
+      "result_digest": "9623cdc86ee0e1f01e338bc35845417f"
+     },
+     "subject": "execute_command",
+     "step": "1"
+    }
+   ],
+   "$comment": "the typed ToolCallRecord has no error -> tool.completed with duration + result digest at metadata"
+  },
+  "tool_result_error": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "tool_result",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "iteration": 2,
+    "tool_result": {
+     "id": "call_2",
+     "name": "read_file",
+     "input": {},
+     "output": null,
+     "error": "EACCES: permission denied",
+     "durationMs": 3,
+     "startedAt": "2026-07-12T00:00:03.000Z",
+     "endedAt": "2026-07-12T00:00:03.100Z"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.failed",
+     "data": {
+      "tool": {
+       "name": "read_file",
+       "call_id": "call_2"
+      },
+      "duration_ms": 3,
+      "error": {
+       "type": "tool_error"
+      }
+     },
+     "subject": "read_file",
+     "step": "2"
+    }
+   ],
+   "$comment": "the typed error field splits HONESTLY into tool.failed — the first plugin-generation vendor that can; message redacted-gated"
+  },
+  "prompt_submit": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "prompt_submit",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null
+   },
+   "expected": [
+    {
+     "type": "x.cline.prompt.submitted",
+     "data": {}
+    }
+   ],
+   "$comment": "reserved-type refusal: message.user.submitted stays unshipped; the typed payload carries no prompt text — the fact rides vendor-scoped at debug"
+  },
+  "pre_compact": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "pre_compact",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "preCompact": {
+     "taskId": "task_fix_1",
+     "ulid": "u1",
+     "contextSize": 180000,
+     "compactionStrategy": "truncate-middle",
+     "previousApiReqIndex": 4,
+     "tokensIn": 120000,
+     "tokensOut": 9000,
+     "tokensInCache": 0,
+     "tokensOutCache": 0,
+     "deletedRangeStart": 2,
+     "deletedRangeEnd": 9,
+     "contextJsonPath": "/tmp/ctx.json",
+     "contextRawPath": "/tmp/ctx.raw"
+    }
+   },
+   "expected": [
+    {
+     "type": "session.compacted",
+     "data": {
+      "strategy": "truncate-middle",
+      "gen_ai.usage.input_tokens": 120000,
+      "gen_ai.usage.output_tokens": 9000
+     }
+    }
+   ],
+   "$comment": "the vendor exposes only the PRE moment (the Gemini PreCompress precedent — deviation from the post-moment rule documented); content-bearing context dump paths are redacted-gated"
+  },
+  "session_shutdown": {
+   "input": {
+    "clineVersion": "1.0.0",
+    "hookName": "session_shutdown",
+    "timestamp": "2026-07-12T00:00:00.000Z",
+    "taskId": "task_fix_1",
+    "workspaceRoots": [
+     "/home/user/proj"
+    ],
+    "userId": "user_1",
+    "agent_id": "agent_root",
+    "parent_agent_id": null,
+    "reason": "window closed"
+   },
+   "expected": [
+    {
+     "type": "session.ended",
+     "data": {
+      "reason": "normal"
+     }
+    }
+   ],
+   "$comment": "vendor free-text reasons do not enter the session.ended enum: normal"
+  }
+ },
+ "fallback": {
+  "input": {
+   "clineVersion": "1.0.0",
+   "hookName": "some_future_hook",
+   "timestamp": "2026-07-12T00:00:00.000Z",
+   "taskId": "task_fix_1",
+   "workspaceRoots": [
+    "/home/user/proj"
+   ],
+   "userId": "user_1",
+   "agent_id": "agent_root",
+   "parent_agent_id": null
+  },
+  "expected": [
+   {
+    "type": "x.cline.some.future.hook",
+    "data": {}
+   }
+  ]
+ }
+}

@@ -1,0 +1,336 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the AG-UI table, verified against the published @ag-ui/core@0.0.57 types (pre-1.0: drift is a re-verify, not a surprise; the deprecated THINKING_* aliases map identically to their REASONING_* replacements). Each entry pins mapEvent at the bridge default posture (capture metadata, deltas OFF); entries whose behavior forks under the AEP_AGUI_DELTAS opt-in carry deltas_expected. expected is {type, data, subject, step}. Identity and runtime joins (threadId -> session and runId -> run scoped per tee stream \u2014 REAL vendor ids, zero synthesis; the toolCallId -> name join on results; role enrichment and text assembly on message ends) are receiver wiring, smoke-pinned in the reference repository. Deliberate nulls: token/argument deltas at the default posture; REASONING_ENCRYPTED_VALUE always (opaque ciphertext, no opt-in); non-assistant message ends. The reply terminal stays x.agui.text_message.end while the registry's message.agent.replied is RESERVED (the sub-profile has not graduated) \u2014 recorded in the design record's banner.",
+ "identity": {
+  "session_from": "threadId (RUN_STARTED; scoped to the tee stream)",
+  "run_from": "runId (RUN_STARTED)",
+  "$comment": "Real vendor identity, no synthesis \u2014 a first among the reference implementations. STEP_* stamps the envelope step."
+ },
+ "events": {
+  "run_started": {
+   "input": {
+    "type": "RUN_STARTED",
+    "threadId": "t_fix_1",
+    "runId": "run_fix_1"
+   },
+   "expected": {
+    "type": "run.started",
+    "data": {
+     "trigger": "user"
+    }
+   }
+  },
+  "run_started_nested": {
+   "input": {
+    "type": "RUN_STARTED",
+    "threadId": "t_fix_1",
+    "runId": "run_fix_2",
+    "parentRunId": "run_fix_1"
+   },
+   "expected": {
+    "type": "run.started",
+    "data": {
+     "trigger": "user",
+     "parent_run": "run_fix_1"
+    }
+   },
+   "$comment": "parentRunId rides as lineage at metadata"
+  },
+  "run_finished": {
+   "input": {
+    "type": "RUN_FINISHED",
+    "threadId": "t_fix_1",
+    "runId": "run_fix_1",
+    "result": "answered"
+   },
+   "expected": {
+    "type": "run.finished",
+    "data": {}
+   }
+  },
+  "run_error": {
+   "input": {
+    "type": "RUN_ERROR",
+    "message": "provider throttled",
+    "code": "rate_limit"
+   },
+   "expected": {
+    "type": "run.failed",
+    "data": {
+     "reason": "rate_limit"
+    }
+   },
+   "$comment": "the vendor code is the reason; the message is redacted-gated"
+  },
+  "step_started": {
+   "input": {
+    "type": "STEP_STARTED",
+    "stepName": "plan"
+   },
+   "expected": {
+    "type": "run.step.started",
+    "data": {},
+    "subject": "plan",
+    "step": "plan"
+   }
+  },
+  "step_finished": {
+   "input": {
+    "type": "STEP_FINISHED",
+    "stepName": "plan"
+   },
+   "expected": {
+    "type": "run.step.finished",
+    "data": {},
+    "subject": "plan",
+    "step": "plan"
+   }
+  },
+  "tool_call_start": {
+   "input": {
+    "type": "TOOL_CALL_START",
+    "toolCallId": "c1",
+    "toolCallName": "search",
+    "parentMessageId": "m0"
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "tool": {
+      "name": "search",
+      "call_id": "c1"
+     }
+    },
+    "subject": "search"
+   }
+  },
+  "tool_call_args": {
+   "input": {
+    "type": "TOOL_CALL_ARGS",
+    "toolCallId": "c1",
+    "delta": "{\"q\":1}"
+   },
+   "expected": null,
+   "deltas_expected": {
+    "type": "x.agui.tool_call.args",
+    "data": {}
+   }
+  },
+  "tool_call_end": {
+   "input": {
+    "type": "TOOL_CALL_END",
+    "toolCallId": "c1"
+   },
+   "expected": null,
+   "deltas_expected": {
+    "type": "x.agui.tool_call.end",
+    "data": {}
+   }
+  },
+  "tool_call_result_joined": {
+   "input": {
+    "type": "TOOL_CALL_RESULT",
+    "messageId": "m1",
+    "toolCallId": "c1",
+    "content": "three results",
+    "toolCallName": "search"
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "search",
+      "call_id": "c1"
+     },
+     "result_digest": "0e6f7f020d63af4bd0d411997c8345b8"
+    },
+    "subject": "c1"
+   },
+   "$comment": "the receiver joins toolCallName from TOOL_CALL_START before mapping"
+  },
+  "tool_call_result_unjoined": {
+   "input": {
+    "type": "TOOL_CALL_RESULT",
+    "messageId": "m1",
+    "toolCallId": "c9",
+    "content": "late attach"
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "unknown",
+      "call_id": "c9"
+     },
+     "result_digest": "b90489c1ed65d1349510f576a27c510a"
+    },
+    "subject": "c9"
+   },
+   "$comment": "a mid-stream attach that never saw the start falls back honestly"
+  },
+  "text_message_start": {
+   "input": {
+    "type": "TEXT_MESSAGE_START",
+    "messageId": "m2",
+    "role": "assistant"
+   },
+   "expected": {
+    "type": "x.agui.text_message.start",
+    "data": {
+     "role": "assistant"
+    },
+    "subject": "m2"
+   }
+  },
+  "text_message_content": {
+   "input": {
+    "type": "TEXT_MESSAGE_CONTENT",
+    "messageId": "m2",
+    "delta": "The relay "
+   },
+   "expected": null,
+   "deltas_expected": {
+    "type": "x.agui.text_message.content",
+    "data": {}
+   }
+  },
+  "text_message_end_assistant": {
+   "input": {
+    "type": "TEXT_MESSAGE_END",
+    "messageId": "m2",
+    "role": "assistant"
+   },
+   "expected": {
+    "type": "x.agui.text_message.end",
+    "data": {},
+    "subject": "m2"
+   },
+   "$comment": "RESERVED-type correction: stays vendor until message.agent.replied graduates; the receiver attaches assembled content at redacted+"
+  },
+  "text_message_end_user": {
+   "input": {
+    "type": "TEXT_MESSAGE_END",
+    "messageId": "m3",
+    "role": "user"
+   },
+   "expected": null,
+   "$comment": "the user side is the UI's own doing \u2014 the agent's replies are the observable"
+  },
+  "reasoning_start": {
+   "input": {
+    "type": "REASONING_START"
+   },
+   "expected": {
+    "type": "x.agui.reasoning.start",
+    "data": {}
+   }
+  },
+  "thinking_start_deprecated_alias": {
+   "input": {
+    "type": "THINKING_START"
+   },
+   "expected": {
+    "type": "x.agui.reasoning.start",
+    "data": {}
+   },
+   "$comment": "deprecated alias, mapped identically to REASONING_START"
+  },
+  "reasoning_message_content": {
+   "input": {
+    "type": "REASONING_MESSAGE_CONTENT",
+    "delta": "hmm"
+   },
+   "expected": null,
+   "deltas_expected": {
+    "type": "x.agui.reasoning_message.content",
+    "data": {}
+   }
+  },
+  "reasoning_encrypted_value": {
+   "input": {
+    "type": "REASONING_ENCRYPTED_VALUE",
+    "value": "AAAB64"
+   },
+   "expected": null,
+   "$comment": "opaque ciphertext is not observability \u2014 nothing, ever, no opt-in"
+  },
+  "state_snapshot": {
+   "input": {
+    "type": "STATE_SNAPSHOT",
+    "snapshot": {
+     "done": 1
+    }
+   },
+   "expected": {
+    "type": "state.snapshot",
+    "data": {}
+   }
+  },
+  "state_delta": {
+   "input": {
+    "type": "STATE_DELTA",
+    "delta": [
+     {
+      "op": "replace",
+      "path": "/done",
+      "value": 2
+     }
+    ]
+   },
+   "expected": {
+    "type": "state.delta",
+    "data": {
+     "ops": 1
+    }
+   },
+   "$comment": "the patch op count is structure (metadata); the patch itself is redacted-gated"
+  },
+  "messages_snapshot": {
+   "input": {
+    "type": "MESSAGES_SNAPSHOT",
+    "messages": []
+   },
+   "expected": {
+    "type": "x.agui.messages.snapshot",
+    "data": {}
+   }
+  },
+  "raw": {
+   "input": {
+    "type": "RAW",
+    "event": {
+     "anything": 1
+    }
+   },
+   "expected": {
+    "type": "x.agui.raw.event",
+    "data": {}
+   },
+   "$comment": "the raw payload never rides below full"
+  },
+  "custom": {
+   "input": {
+    "type": "CUSTOM",
+    "name": "checkpoint",
+    "value": {
+     "at": "answer"
+    }
+   },
+   "expected": {
+    "type": "x.agui.custom.event",
+    "data": {
+     "name": "checkpoint"
+    }
+   }
+  }
+ },
+ "fallback": {
+  "input": {
+   "type": "WHOLLY_NOVEL_SIGNAL",
+   "anything": true
+  },
+  "expected": {
+   "type": "x.agui.wholly_novel.signal",
+   "data": {}
+  }
+ }
+}

@@ -1,0 +1,328 @@
+{
+  "$comment": "AEP-0002 \u00a74 registered core types for 0.1. status: mandatory|optional|reserved. scope: session|agent|command. schema: payload schema file under schemas/types/, or null when the payload is deferred/free-form. Machine source of truth for codegen and aep validate.",
+  "aep": "0.1",
+  "types": [
+    {
+      "type": "session.started",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "session.started.schema.json",
+      "summary": "a session began; carries lineage and client info"
+    },
+    {
+      "type": "session.ended",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "session.ended.schema.json",
+      "summary": "terminal for a session"
+    },
+    {
+      "type": "run.started",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "run.started.schema.json",
+      "summary": "an activation began within the session"
+    },
+    {
+      "type": "run.finished",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "run.finished.schema.json",
+      "summary": "run reached success"
+    },
+    {
+      "type": "run.failed",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "run.failed.schema.json",
+      "summary": "run reached failure (incl. rejection)"
+    },
+    {
+      "type": "run.cancelled",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "run.cancelled.schema.json",
+      "summary": "run was cancelled \u2014 not a failure"
+    },
+    {
+      "type": "tool.requested",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "tool.requested.schema.json",
+      "summary": "tool invocation about to execute"
+    },
+    {
+      "type": "tool.completed",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "tool.completed.schema.json",
+      "summary": "tool invocation succeeded"
+    },
+    {
+      "type": "tool.failed",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "tool.failed.schema.json",
+      "summary": "tool invocation errored"
+    },
+    {
+      "type": "tool.denied",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "tool.denied.schema.json",
+      "summary": "tool invocation blocked pre-execution, no human loop"
+    },
+    {
+      "type": "attention.requested",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "attention.requested.schema.json",
+      "summary": "the agent needs a human or policy delegate"
+    },
+    {
+      "type": "attention.answered",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "attention.answered.schema.json",
+      "summary": "a response to the request was produced"
+    },
+    {
+      "type": "attention.resolved",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "attention.resolved.schema.json",
+      "summary": "the request lifecycle closed"
+    },
+    {
+      "type": "attention.timeout",
+      "status": "mandatory",
+      "scope": "session",
+      "schema": "attention.timeout.schema.json",
+      "summary": "the request expired unanswered \u2014 terminal"
+    },
+    {
+      "type": "session.compacted",
+      "status": "optional",
+      "scope": "session",
+      "schema": "session.compacted.schema.json",
+      "summary": "context compaction occurred; emitted once at completion"
+    },
+    {
+      "type": "run.step.started",
+      "status": "optional",
+      "scope": "session",
+      "schema": "run.step.started.schema.json",
+      "summary": "sub-run phase began; sets envelope step"
+    },
+    {
+      "type": "run.step.finished",
+      "status": "optional",
+      "scope": "session",
+      "schema": "run.step.finished.schema.json",
+      "summary": "sub-run phase ended"
+    },
+    {
+      "type": "progress.status",
+      "status": "optional",
+      "scope": "session",
+      "schema": "progress.status.schema.json",
+      "summary": "free-form progress heartbeat for a run"
+    },
+    {
+      "type": "progress.task.planned",
+      "status": "optional",
+      "scope": "session",
+      "schema": "progress.task.planned.schema.json",
+      "summary": "plan item created"
+    },
+    {
+      "type": "progress.task.completed",
+      "status": "optional",
+      "scope": "session",
+      "schema": "progress.task.completed.schema.json",
+      "summary": "plan item completed"
+    },
+    {
+      "type": "progress.artifact.produced",
+      "status": "optional",
+      "scope": "session",
+      "schema": "progress.artifact.produced.schema.json",
+      "summary": "an output artifact exists"
+    },
+    {
+      "type": "delegation.subagent.started",
+      "status": "optional",
+      "scope": "session",
+      "schema": "delegation.subagent.started.schema.json",
+      "summary": "subagent lifecycle start"
+    },
+    {
+      "type": "delegation.subagent.stopped",
+      "status": "optional",
+      "scope": "session",
+      "schema": "delegation.subagent.stopped.schema.json",
+      "summary": "subagent lifecycle stop"
+    },
+    {
+      "type": "attention.routed",
+      "status": "optional",
+      "scope": "session",
+      "schema": "attention.routed.schema.json",
+      "summary": "a router/sink delivered the request onward (emitted by consumers)"
+    },
+    {
+      "type": "agent.presence",
+      "status": "optional",
+      "scope": "agent",
+      "schema": "agent.presence.schema.json",
+      "summary": "emitter presence changed"
+    },
+    {
+      "type": "agent.idle",
+      "status": "optional",
+      "scope": "agent",
+      "schema": "agent.idle.schema.json",
+      "summary": "agent became idle/awaiting work"
+    },
+    {
+      "type": "agent.health",
+      "status": "optional",
+      "scope": "agent",
+      "schema": "agent.health.schema.json",
+      "summary": "health report"
+    },
+    {
+      "type": "agent.heartbeat",
+      "status": "optional",
+      "scope": "agent",
+      "schema": "agent.heartbeat.schema.json",
+      "summary": "liveness tick"
+    },
+    {
+      "type": "error.raised",
+      "status": "optional",
+      "scope": "session",
+      "schema": "error.raised.schema.json",
+      "summary": "fault outside tool/run terminals"
+    },
+    {
+      "type": "state.snapshot",
+      "status": "optional",
+      "scope": "session",
+      "schema": "state.snapshot.schema.json",
+      "summary": "agent-owned state image"
+    },
+    {
+      "type": "state.delta",
+      "status": "optional",
+      "scope": "session",
+      "schema": "state.delta.schema.json",
+      "summary": "agent-owned state JSON-Patch delta"
+    },
+    {
+      "type": "resource.retrieval.requested",
+      "status": "optional",
+      "scope": "session",
+      "schema": "resource.retrieval.requested.schema.json",
+      "summary": "a retrieval against an external corpus is about to run (experimental)"
+    },
+    {
+      "type": "resource.retrieval.returned",
+      "status": "optional",
+      "scope": "session",
+      "schema": "resource.retrieval.returned.schema.json",
+      "summary": "a retrieval produced documents with provenance (experimental)"
+    },
+    {
+      "type": "resource.retrieval.reranked",
+      "status": "optional",
+      "scope": "session",
+      "schema": "resource.retrieval.reranked.schema.json",
+      "summary": "a rerank scored/reordered retrieved documents (experimental)"
+    },
+    {
+      "type": "resource.citation.recorded",
+      "status": "optional",
+      "scope": "session",
+      "schema": "resource.citation.recorded.schema.json",
+      "summary": "a produced answer's citations: which claims cite which source spans (experimental)"
+    },
+    {
+      "type": "assessment.evaluation.recorded",
+      "status": "optional",
+      "scope": "session",
+      "schema": "assessment.evaluation.recorded.schema.json",
+      "summary": "an automated/LLM-judge evaluation result about work (experimental)"
+    },
+    {
+      "type": "assessment.feedback.received",
+      "status": "optional",
+      "scope": "session",
+      "schema": "assessment.feedback.received.schema.json",
+      "summary": "a human feedback signal about work: rating, label, comment, correction (experimental)"
+    },
+    {
+      "type": "assessment.guardrail.recorded",
+      "status": "optional",
+      "scope": "session",
+      "schema": "assessment.guardrail.recorded.schema.json",
+      "summary": "an automated content-safety verdict already taken: a guardrail/filter fired on an input or output (experimental)"
+    },
+    {
+      "type": "message.user.submitted",
+      "status": "reserved",
+      "scope": "session",
+      "schema": null,
+      "summary": "reserved for the message sub-profile (future AEP)"
+    },
+    {
+      "type": "message.agent.replied",
+      "status": "reserved",
+      "scope": "session",
+      "schema": null,
+      "summary": "reserved for the message sub-profile (future AEP)"
+    },
+    {
+      "type": "control.attention.respond",
+      "status": "optional",
+      "scope": "command",
+      "schema": "control.attention.respond.schema.json",
+      "summary": "deliver an answer to an attention request (experimental profile)"
+    },
+    {
+      "type": "control.cancel",
+      "status": "optional",
+      "scope": "command",
+      "schema": "control.cancel.schema.json",
+      "summary": "request cancellation of a run or session (experimental profile)"
+    },
+    {
+      "type": "control.pause",
+      "status": "optional",
+      "scope": "command",
+      "schema": "control.pause.schema.json",
+      "summary": "request pause (experimental profile)"
+    },
+    {
+      "type": "control.resume",
+      "status": "optional",
+      "scope": "command",
+      "schema": "control.resume.schema.json",
+      "summary": "request resume (experimental profile)"
+    },
+    {
+      "type": "control.accepted",
+      "status": "optional",
+      "scope": "session",
+      "schema": "control.accepted.schema.json",
+      "summary": "target will attempt the command; cause = command id (experimental profile)"
+    },
+    {
+      "type": "control.rejected",
+      "status": "optional",
+      "scope": "session",
+      "schema": "control.rejected.schema.json",
+      "summary": "target will not attempt the command; cause = command id (experimental profile)"
+    }
+  ]
+}

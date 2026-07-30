@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/resource.citation.recorded.schema.json",
+  "title": "AEP payload: resource.citation.recorded",
+  "type": "object",
+  "properties": {
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "x-aep-capture": "metadata"
+              },
+              "uri": {
+                "type": "string",
+                "x-aep-capture": "redacted"
+              },
+              "title": {
+                "type": "string",
+                "x-aep-capture": "redacted"
+              }
+            },
+            "x-aep-capture": "metadata"
+          },
+          "cited_text_redacted": {
+            "type": "string",
+            "x-aep-capture": "redacted"
+          },
+          "cited_text": {
+            "type": "string",
+            "x-aep-capture": "full"
+          },
+          "offset": {
+            "type": "object",
+            "properties": {
+              "char": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  },
+                  "end": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  }
+                },
+                "x-aep-capture": "metadata"
+              },
+              "page": {
+                "type": "object",
+                "properties": {
+                  "page": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  },
+                  "start": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  },
+                  "end": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  }
+                },
+                "x-aep-capture": "metadata"
+              },
+              "block": {
+                "type": "object",
+                "properties": {
+                  "block": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  },
+                  "start": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  },
+                  "end": {
+                    "type": "integer",
+                    "x-aep-capture": "metadata"
+                  }
+                },
+                "x-aep-capture": "metadata"
+              }
+            },
+            "x-aep-capture": "metadata"
+          },
+          "document_index": {
+            "type": "integer",
+            "minimum": 0,
+            "x-aep-capture": "metadata"
+          }
+        },
+        "x-aep-capture": "metadata"
+      },
+      "x-aep-capture": "metadata"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

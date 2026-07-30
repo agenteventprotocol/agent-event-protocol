@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/agent.health.schema.json",
+  "title": "AEP payload: agent.health",
+  "type": "object",
+  "properties": {
+    "status": {
+      "enum": [
+        "ok",
+        "degraded",
+        "failing"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "detail": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    }
+  },
+  "required": [
+    "status"
+  ]
+}

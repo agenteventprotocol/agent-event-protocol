@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/agent.presence.schema.json",
+  "title": "AEP payload: agent.presence",
+  "type": "object",
+  "properties": {
+    "state": {
+      "enum": [
+        "online",
+        "offline",
+        "busy"
+      ],
+      "x-aep-capture": "metadata"
+    }
+  },
+  "required": [
+    "state"
+  ]
+}

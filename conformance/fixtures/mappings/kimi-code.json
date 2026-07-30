@@ -1,0 +1,861 @@
+{
+  "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the Kimi Code CLI table — the 16-event external-hooks surface -> core types + the vendor-extension fallback. Verified against the pinned vendor source (MoonshotAI/kimi-code c2d7beb = the shipped @moonshot-ai/kimi-code 0.28.1, npm latest and repo head version equal): agent-core-v2 externalHooks/types.ts (the 16-event enum), externalHooksService.ts both scopes (per-event stdin payloads, snake_cased at spawn), approval.ts + permissionGateService.ts (the permission pair). The six lifecycle payload shapes (SessionStart / UserPromptSubmit / PreToolUse / PostToolUse / Stop / SessionEnd) are ORACLE-CAPTURED from the shipped binary driven headless against a mock provider; the permission pair is source-derived, live-pending. Each entry pins the pure hook->event mapping at the adapter default posture (capture metadata; attention.* redacted). Envelope identity, run synthesis, the permission-pair companions (resolved + the rejected decision's tool.denied by:runtime), the stale-run drain, and the opt-in held PreToolUse gate (AEP_KIMI_CONTROL=1, binary allow/deny) are runtime state, pinned by the reference adapter smokes. Coverage honesty, pinned here as behaviors: PermissionResult decision 'error' degrades to the fallback (an internal gate failure, not an answer); a steer submission never opens a run; the pre-compaction moment degrades to the fallback because the POST moment is the truthful carrier (the CC/Qwen post-moment rule); Notification is background-task status only (never an attention loop); hooks register ONLY in the one global config.toml (strict four-field schema, no per-project file, fail-open by vendor design).",
+  "identity": {
+    "session_from": "session_id",
+    "run_from": null,
+    "$comment": "session_id defaults to 'unknown' when absent (SubagentStart/SubagentStop carry none). Hooks carry no turn id at the run boundary: the adapter synthesizes one run per UserPromptSubmit, closed by Stop/StopFailure/Interrupt (the vendor's own Esc moment) and drained at the next boundary when left open. tool_call_id pairs tool and permission moments exactly; PermissionRequest/Interrupt carry turn_id but it never becomes the run id (one id authority, the synthesized run). cwd (workstation-local) deliberately never rides."
+  },
+  "hooks": {
+    "SessionStart": {
+      "input": {
+        "hook_event_name": "SessionStart",
+        "session_id": "session_fix_1",
+        "cwd": "/home/user/project",
+        "source": "startup"
+      },
+      "expected": {
+        "type": "session.started",
+        "data": {
+          "trigger": "startup"
+        },
+        "$comment": "ORACLE-CAPTURED shape; source is 'startup' | 'resume' (sessionLifecycle.ts; 'fork' does not fire this hook)."
+      }
+    },
+    "SessionEnd": {
+      "input": {
+        "hook_event_name": "SessionEnd",
+        "session_id": "session_fix_1",
+        "cwd": "/home/user/project",
+        "reason": "exit"
+      },
+      "expected": {
+        "type": "session.ended",
+        "data": {
+          "reason": "normal"
+        },
+        "$comment": "ORACLE-CAPTURED; the vendor's single reason value 'exit' normalizes to the schema enum ('normal'). The adapter drains a still-open run and drops queued instructions before this event."
+      }
+    },
+    "UserPromptSubmit": {
+      "input": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session_fix_1",
+        "cwd": "/home/user/project",
+        "prompt": [
+          {
+            "type": "text",
+            "text": "refactor the auth module"
+          }
+        ]
+      },
+      "expected": {
+        "type": "run.started",
+        "data": {
+          "trigger": "user"
+        },
+        "$comment": "ORACLE-CAPTURED: prompt is a CONTENT-PART ARRAY, text parts joined at redacted+ (gated out here at metadata). The adapter synthesizes the run at this boundary."
+      }
+    },
+    "UserPromptSubmit_steer": {
+      "input": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session_fix_1",
+        "prompt": [
+          {
+            "type": "text",
+            "text": "also check the tests"
+          }
+        ],
+        "is_steer": true
+      },
+      "expected": {
+        "type": "x.kimi-code.run.steer_submitted",
+        "data": {},
+        "$comment": "is_steer rides the RUNNING turn (turn.steer) — no run boundary exists at this moment, so the fact lands in the vendor extension namespace and run.started is never emitted."
+      }
+    },
+    "Stop": {
+      "input": {
+        "hook_event_name": "Stop",
+        "session_id": "session_fix_1",
+        "cwd": "/home/user/project",
+        "stop_hook_active": false
+      },
+      "expected": {
+        "type": "run.finished",
+        "data": {},
+        "$comment": "ORACLE-CAPTURED; stop_hook_active is the vendor's own continuation-loop plumbing, not a session fact — never forwarded."
+      }
+    },
+    "StopFailure": {
+      "input": {
+        "hook_event_name": "StopFailure",
+        "session_id": "session_fix_1",
+        "error_type": "ProviderError",
+        "error_message": "upstream 500"
+      },
+      "expected": {
+        "type": "run.failed",
+        "data": {
+          "reason": "ProviderError",
+          "error": {
+            "type": "ProviderError"
+          }
+        },
+        "$comment": "error_type doubles as the REQUIRED run.failed reason and error.type; error_message rides at redacted+."
+      }
+    },
+    "Interrupt": {
+      "input": {
+        "hook_event_name": "Interrupt",
+        "session_id": "session_fix_1",
+        "turn_id": "turn_3",
+        "reason": "cancelled"
+      },
+      "expected": {
+        "type": "run.cancelled",
+        "data": {
+          "by": "user"
+        },
+        "$comment": "the vendor names the Esc moment itself (fired ONLY for reason 'cancelled', never timeouts or programmatic aborts) — run.cancelled by:user with no drain heuristic on the happy path. turn_id never rides (one id authority)."
+      }
+    },
+    "PreToolUse": {
+      "input": {
+        "hook_event_name": "PreToolUse",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "echo oracle-test"
+        },
+        "tool_call_id": "call_fix_1"
+      },
+      "expected": {
+        "type": "tool.requested",
+        "data": {
+          "tool": {
+            "name": "Bash",
+            "call_id": "call_fix_1"
+          },
+          "args_digest": "eef5fe32898c894ee12a2d389d4d8096"
+        },
+        "subject": "Bash",
+        "$comment": "ORACLE-CAPTURED; exact pairing via tool_call_id; args digest always, args at full only. Under AEP_KIMI_CONTROL=1 this hook is ALSO the held gate — runtime state, smoke-pinned."
+      }
+    },
+    "PostToolUse": {
+      "input": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "echo oracle-test"
+        },
+        "tool_call_id": "call_fix_1",
+        "tool_output": "oracle-test\n"
+      },
+      "expected": {
+        "type": "tool.completed",
+        "data": {
+          "tool": {
+            "name": "Bash",
+            "call_id": "call_fix_1"
+          },
+          "result_digest": "0e6ed1271cd74959ce2d21fed82aa351"
+        },
+        "subject": "Bash",
+        "$comment": "ORACLE-CAPTURED; tool_output is a string the vendor slices to 2000 chars; digest always, result at full only."
+      }
+    },
+    "PostToolUseFailure": {
+      "input": {
+        "hook_event_name": "PostToolUseFailure",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "false"
+        },
+        "tool_call_id": "call_fix_2",
+        "error": {
+          "name": "ToolError",
+          "message": "exit status 1"
+        }
+      },
+      "expected": {
+        "type": "tool.failed",
+        "data": {
+          "tool": {
+            "name": "Bash",
+            "call_id": "call_fix_2"
+          },
+          "error": {
+            "type": "ToolError"
+          }
+        },
+        "subject": "Bash",
+        "$comment": "the failure twin EXISTS on this vendor; error.name -> error.type (schema field), message at redacted+."
+      }
+    },
+    "PermissionRequest": {
+      "input": {
+        "hook_event_name": "PermissionRequest",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "rm -rf build"
+        },
+        "tool_call_id": "call_fix_3",
+        "action": "execute",
+        "display": "Run `rm -rf build`?",
+        "turn_id": "turn_1",
+        "agent_id": "main"
+      },
+      "expected": {
+        "type": "attention.requested",
+        "data": {
+          "kind": "permission",
+          "prompt": "Run `rm -rf build`?",
+          "respond_via": [
+            "oob"
+          ]
+        },
+        "subject": "Bash",
+        "$comment": "the vendor's own TUI approval prompt is opening — observe-only: respond_via ['oob'], NO options claimed (the vendor owns the choice surface; AEP-0008 rule). display rides at the redacted attention ceiling."
+      }
+    },
+    "PermissionResult_approved": {
+      "input": {
+        "hook_event_name": "PermissionResult",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_call_id": "call_fix_3",
+        "turn_id": "turn_1",
+        "agent_id": "main",
+        "decision": "approved",
+        "selected_label": "Approve once"
+      },
+      "expected": {
+        "type": "attention.answered",
+        "data": {
+          "answer": {
+            "option": "approved"
+          },
+          "via": "oob",
+          "label": "Approve once"
+        },
+        "$comment": "decision -> answer.option verbatim; selected_label at metadata as the label fact. The resolved companion is envelope wiring, smoke-pinned."
+      }
+    },
+    "PermissionResult_rejected": {
+      "input": {
+        "hook_event_name": "PermissionResult",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_call_id": "call_fix_4",
+        "turn_id": "turn_1",
+        "agent_id": "main",
+        "decision": "rejected",
+        "feedback": "do not pipe remote scripts"
+      },
+      "expected": {
+        "type": "attention.answered",
+        "data": {
+          "answer": {
+            "option": "rejected",
+            "text": "do not pipe remote scripts"
+          },
+          "via": "oob"
+        },
+        "$comment": "feedback -> answer.text at redacted+; the enforcement fact (tool.denied by:runtime) is envelope wiring cause-linked to this answer, smoke-pinned."
+      }
+    },
+    "PermissionResult_cancelled": {
+      "input": {
+        "hook_event_name": "PermissionResult",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_call_id": "call_fix_5",
+        "turn_id": "turn_1",
+        "agent_id": "main",
+        "decision": "cancelled"
+      },
+      "expected": {
+        "type": "attention.resolved",
+        "data": {
+          "resolution": "dismissed"
+        },
+        "$comment": "no answer exists — attention.resolved dismissed, no answered moment."
+      }
+    },
+    "PermissionResult_error": {
+      "input": {
+        "hook_event_name": "PermissionResult",
+        "session_id": "session_fix_1",
+        "tool_name": "Bash",
+        "tool_call_id": "call_fix_6",
+        "turn_id": "turn_1",
+        "agent_id": "main",
+        "decision": "error",
+        "error": "gate failure"
+      },
+      "expected": {
+        "type": "x.kimi-code.session.permission_result",
+        "data": {},
+        "$comment": "decision 'error' is an internal gate failure, not an answer — degrades to the fallback, never invents an attention outcome."
+      }
+    },
+    "SubagentStart": {
+      "input": {
+        "hook_event_name": "SubagentStart",
+        "agent_name": "explore",
+        "prompt": "map the repo layout"
+      },
+      "expected": {
+        "type": "delegation.subagent.started",
+        "data": {},
+        "subject": "explore",
+        "$comment": "no session_id on the subagent hooks -> 'unknown' identity (envelope wiring); subject = agent_name; prompt at redacted+."
+      }
+    },
+    "SubagentStop": {
+      "input": {
+        "hook_event_name": "SubagentStop",
+        "agent_name": "explore",
+        "response": "three packages, one app"
+      },
+      "expected": {
+        "type": "delegation.subagent.stopped",
+        "data": {},
+        "subject": "explore",
+        "$comment": "response at redacted+."
+      }
+    },
+    "PreCompact": {
+      "input": {
+        "hook_event_name": "PreCompact",
+        "session_id": "session_fix_1",
+        "trigger": "auto",
+        "token_count": 180000
+      },
+      "expected": {
+        "type": "x.kimi-code.session.pre_compact",
+        "data": {
+          "trigger": "auto",
+          "token_count": 180000
+        },
+        "$comment": "both compaction moments exist — the POST moment is the truthful 'it happened' carrier (the CC/Qwen post-moment rule), so the pre moment degrades to the fallback, never drops. Return values are vendor-ignored on this hook."
+      }
+    },
+    "PostCompact": {
+      "input": {
+        "hook_event_name": "PostCompact",
+        "session_id": "session_fix_1",
+        "trigger": "auto",
+        "estimated_token_count": 42000
+      },
+      "expected": {
+        "type": "session.compacted",
+        "data": {
+          "trigger": "auto",
+          "estimated_token_count": 42000
+        },
+        "$comment": "trigger 'manual' | 'auto'; estimated_token_count at metadata."
+      }
+    },
+    "Notification": {
+      "input": {
+        "hook_event_name": "Notification",
+        "session_id": "session_fix_1",
+        "sink": "context",
+        "notification_type": "task.completed",
+        "title": "Background task finished",
+        "body": "lint fixed 3 files",
+        "severity": "info",
+        "source_kind": "task",
+        "source_id": "task_9"
+      },
+      "expected": {
+        "type": "progress.status",
+        "data": {
+          "severity": "info"
+        },
+        "subject": "task.completed",
+        "$comment": "background-task status ONLY (taskService task.<status>) — an observability heartbeat, never an attention loop (no idle/needs-input hook exists on this vendor); subject = notification_type; title at redacted+."
+      }
+    }
+  },
+  "fallback": {
+    "input": {
+      "hook_event_name": "SomeNewKimiHook",
+      "session_id": "session_fix_1"
+    },
+    "expected": {
+      "type": "x.kimi-code.session.some_new_kimi_hook",
+      "data": {},
+      "$comment": "AEP-0001 §6 mechanical vendor-extension fallback — the 16-event enum may grow (the vendor ships weekly); unknown hooks degrade, never drop."
+    }
+  },
+  "ws_modes": {
+    "$comment": "The Kimi web channel (kap-server WS event stream; design record addendum). Inputs are WS envelopes as received ({type, seq, session_id, timestamp, payload, volatile?}); the lifecycle/approval shapes are oracle-captured from the shipped 0.28.1 (kimi web on a scratch KIMI_CODE_HOME against a mock provider), the question loop is source-derived (packages/protocol question.ts + the kap-server broadcaster). Rules: volatile frames never emit in either mode (the vendor own do-not-persist marker); the internal permission.approval.* bus echoes are deduped in favor of their event.approval.* wire twins. companion (default - the hook adapter observes the same kap-hosted sessions and is the SOLE core-type authority; the permission-pair parity is oracle-proven) emits ONLY the channel-visible x.kimi-code.web.* family with empty data. primary (stream-only deployments) maps the wire: the vendor REAL turn boundaries carry the run pair (no synthesis), tool.call.started opens the tool pair (tool.result stays null here - the result names no tool, the receiver drives the stateful call-id pairing), and every ask maps to attention.requested WITHOUT options or respond_via (the read-only-channel rule; the opt-in controls decorate receiver-side and never touch this pin). No session lifecycle is fabricated: kap sessions outlive connections. Checked by run.js against the reference mode-policy module and by run.py as wire facts.",
+    "modes": {
+      "turn_started": {
+        "input": {
+          "type": "turn.started",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "turn.started",
+            "sessionId": "session_fix_web_1",
+            "turnId": 0,
+            "origin": {
+              "kind": "user"
+            },
+            "prompt": "run echo probe",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.turn.started",
+          "data": {}
+        },
+        "primary": {
+          "type": "run.started",
+          "data": {
+            "trigger": "user"
+          }
+        }
+      },
+      "turn_ended_completed": {
+        "input": {
+          "type": "turn.ended",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "turn.ended",
+            "sessionId": "session_fix_web_1",
+            "turnId": 0,
+            "reason": "completed",
+            "durationMs": 5000,
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.turn.ended",
+          "data": {}
+        },
+        "primary": {
+          "type": "run.finished",
+          "data": {}
+        }
+      },
+      "turn_ended_cancelled": {
+        "input": {
+          "type": "turn.ended",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "turn.ended",
+            "sessionId": "session_fix_web_1",
+            "turnId": 0,
+            "reason": "cancelled",
+            "durationMs": 900,
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.turn.ended",
+          "data": {}
+        },
+        "primary": {
+          "type": "run.cancelled",
+          "data": {}
+        }
+      },
+      "tool_call_started": {
+        "input": {
+          "type": "tool.call.started",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "tool.call.started",
+            "sessionId": "session_fix_web_1",
+            "turnId": 0,
+            "toolCallId": "call_fix_1",
+            "name": "Bash",
+            "args": {
+              "command": "echo probe"
+            },
+            "description": "Running: echo probe",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.tool.call.started",
+          "data": {}
+        },
+        "primary": {
+          "type": "tool.requested",
+          "data": {
+            "tool": {
+              "name": "Bash",
+              "call_id": "call_fix_1"
+            },
+            "args_digest": "4dbce387a92df2c7996d0522a6e78340"
+          },
+          "subject": "Bash"
+        }
+      },
+      "tool_result": {
+        "input": {
+          "type": "tool.result",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "tool.result",
+            "sessionId": "session_fix_web_1",
+            "turnId": 0,
+            "toolCallId": "call_fix_1",
+            "output": "probe",
+            "isError": false,
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.tool.result",
+          "data": {}
+        },
+        "primary": null
+      },
+      "approval_requested": {
+        "input": {
+          "type": "event.approval.requested",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "event.approval.requested",
+            "sessionId": "session_fix_web_1",
+            "approval_id": "call_fix_1",
+            "session_id": "session_fix_web_1",
+            "turn_id": 0,
+            "tool_call_id": "call_fix_1",
+            "tool_name": "Bash",
+            "action": "Running: echo probe",
+            "tool_input_display": {
+              "kind": "command",
+              "command": "echo probe",
+              "cwd": "/p",
+              "language": "bash"
+            },
+            "created_at": "2026-07-21T03:00:00.000Z",
+            "expires_at": "2026-07-22T03:00:00.000Z",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.event.approval.requested",
+          "data": {}
+        },
+        "primary": {
+          "type": "attention.requested",
+          "data": {
+            "kind": "permission",
+            "prompt": "Running: echo probe"
+          },
+          "subject": "call_fix_1"
+        }
+      },
+      "approval_resolved_rejected": {
+        "input": {
+          "type": "event.approval.resolved",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "event.approval.resolved",
+            "sessionId": "session_fix_web_1",
+            "approval_id": "call_fix_1",
+            "decision": "rejected",
+            "feedback": "not now",
+            "resolved_at": "2026-07-21T03:00:05.000Z",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.event.approval.resolved",
+          "data": {}
+        },
+        "primary": {
+          "type": "attention.answered",
+          "data": {
+            "answer": {
+              "option": "rejected",
+              "text": "not now"
+            },
+            "via": "oob"
+          },
+          "subject": "call_fix_1"
+        }
+      },
+      "approval_resolved_dismissed": {
+        "input": {
+          "type": "event.approval.resolved",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "event.approval.resolved",
+            "sessionId": "session_fix_web_1",
+            "approval_id": "call_fix_1",
+            "resolved_at": "2026-07-21T03:00:05.000Z",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.event.approval.resolved",
+          "data": {}
+        },
+        "primary": {
+          "type": "attention.resolved",
+          "data": {
+            "resolution": "dismissed"
+          },
+          "subject": "call_fix_1"
+        }
+      },
+      "question_requested": {
+        "input": {
+          "type": "event.question.requested",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "event.question.requested",
+            "sessionId": "session_fix_web_1",
+            "question_id": "q_fix_1",
+            "session_id": "session_fix_web_1",
+            "turn_id": 0,
+            "questions": [
+              {
+                "id": "q_0",
+                "question": "Which env?",
+                "options": [
+                  {
+                    "id": "opt_0_0",
+                    "label": "dev"
+                  },
+                  {
+                    "id": "opt_0_1",
+                    "label": "prod"
+                  }
+                ]
+              }
+            ],
+            "created_at": "2026-07-21T03:00:00.000Z",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.event.question.requested",
+          "data": {}
+        },
+        "primary": {
+          "type": "attention.requested",
+          "data": {
+            "kind": "form",
+            "prompt": "Which env?",
+            "fields": [
+              {
+                "id": "q_0",
+                "type": "select",
+                "label": "Which env?",
+                "choices": [
+                  {
+                    "id": "opt_0_0",
+                    "label": "dev"
+                  },
+                  {
+                    "id": "opt_0_1",
+                    "label": "prod"
+                  }
+                ]
+              }
+            ]
+          },
+          "subject": "q_fix_1"
+        }
+      },
+      "question_answered": {
+        "input": {
+          "type": "event.question.answered",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "event.question.answered",
+            "sessionId": "session_fix_web_1",
+            "question_id": "q_fix_1",
+            "answers": {
+              "q_0": {
+                "kind": "single",
+                "option_id": "opt_0_0"
+              }
+            },
+            "resolved_at": "2026-07-21T03:00:06.000Z",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.event.question.answered",
+          "data": {}
+        },
+        "primary": {
+          "type": "attention.answered",
+          "data": {
+            "answer": {
+              "values": {
+                "q_0": {
+                  "kind": "single",
+                  "option_id": "opt_0_0"
+                }
+              }
+            },
+            "via": "oob"
+          },
+          "subject": "q_fix_1"
+        }
+      },
+      "question_dismissed": {
+        "input": {
+          "type": "event.question.dismissed",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "event.question.dismissed",
+            "sessionId": "session_fix_web_1",
+            "question_id": "q_fix_1",
+            "dismissed_at": "2026-07-21T03:00:06.000Z",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.event.question.dismissed",
+          "data": {}
+        },
+        "primary": {
+          "type": "attention.resolved",
+          "data": {
+            "resolution": "dismissed"
+          },
+          "subject": "q_fix_1"
+        }
+      },
+      "work_changed": {
+        "input": {
+          "type": "event.session.work_changed",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "event.session.work_changed",
+            "sessionId": "session_fix_web_1",
+            "busy": true,
+            "main_turn_active": true,
+            "pending_interaction": "none",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.event.session.work_changed",
+          "data": {}
+        },
+        "primary": {
+          "type": "x.kimi-code.web.event.session.work_changed",
+          "data": {
+            "busy": true,
+            "pending_interaction": "none"
+          }
+        }
+      },
+      "volatile_status": {
+        "input": {
+          "type": "agent.status.updated",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "agent.status.updated",
+            "sessionId": "session_fix_web_1",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix",
+          "volatile": true
+        },
+        "companion": null,
+        "primary": null
+      },
+      "bus_echo_permission": {
+        "input": {
+          "type": "permission.approval.requested",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "permission.approval.requested",
+            "sessionId": "session_fix_web_1",
+            "approval_id": "call_fix_1",
+            "tool_call_id": "call_fix_1",
+            "tool_name": "Bash",
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": null,
+        "primary": null
+      },
+      "session_meta_updated": {
+        "input": {
+          "type": "session.meta.updated",
+          "seq": 1,
+          "session_id": "session_fix_web_1",
+          "timestamp": "2026-07-21T03:00:00.000Z",
+          "payload": {
+            "type": "session.meta.updated",
+            "sessionId": "session_fix_web_1",
+            "patch": {
+              "lastPrompt": "run echo probe"
+            },
+            "agentId": "main"
+          },
+          "epoch": "ep_fix"
+        },
+        "companion": {
+          "type": "x.kimi-code.web.session.meta.updated",
+          "data": {}
+        },
+        "primary": {
+          "type": "x.kimi-code.web.session.meta.updated",
+          "data": {}
+        }
+      }
+    }
+  }
+}

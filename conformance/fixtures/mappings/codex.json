@@ -1,0 +1,91 @@
+{
+  "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the Codex table (10 hooks -> 10 core types, plus the vendor-extension fallback for unknown hooks). Each entry pins the pure hook->event mapping at the adapter's default capture posture (capture metadata; attention.* redacted): `input` is a synthetic hook payload using the vendor-documented field names; `expected` is {type, data, subject} — or null where the mapping deliberately emits nothing (PreCompact: session.compacted fires once, at PostCompact — the documented deviation). Envelope identity facts (Codex thread/session_id -> AEP session, turn_id -> AEP run) and causal wiring (cause links, the PermissionRequest control round-trip) are runtime state, pinned by the reference repository's smoke, not here. run.js pins impl/adapter-codex/map-hooks.js (the adapter's own pure mapping) against `expected`; run.py — spec-only, no adapter implementation — checks each expected payload against its type's schema and the Annex A wire facts.",
+  "identity": {
+    "session_from": "session_id",
+    "run_from": "turn_id",
+    "$comment": "Codex `thread` scope = AEP `session`; Codex `turn` (turn_id) = AEP `run`."
+  },
+  "hooks": {
+    "SessionStart": {
+      "input": { "hook_event_name": "SessionStart", "session_id": "s_fix_1", "source": "startup", "model": "gpt-5.2-codex", "cwd": "/home/user/proj" },
+      "expected": {
+        "type": "session.started",
+        "data": { "client": { "name": "codex" }, "trigger": "startup", "gen_ai.request.model": "gpt-5.2-codex" },
+        "$comment": "cwd is gated `redacted` and is dropped at the default metadata ceiling"
+      }
+    },
+    "UserPromptSubmit": {
+      "input": { "hook_event_name": "UserPromptSubmit", "session_id": "s_fix_1", "turn_id": "t_fix_1", "prompt": "Fix the failing test" },
+      "expected": {
+        "type": "run.started",
+        "data": { "trigger": "user" },
+        "$comment": "prompt is gated `redacted` and is dropped at the default metadata ceiling"
+      }
+    },
+    "Stop": {
+      "input": { "hook_event_name": "Stop", "session_id": "s_fix_1", "turn_id": "t_fix_1" },
+      "expected": { "type": "run.finished", "data": {} }
+    },
+    "PreToolUse": {
+      "input": { "hook_event_name": "PreToolUse", "session_id": "s_fix_1", "turn_id": "t_fix_1", "tool_name": "shell", "tool_use_id": "call_1", "tool_input": { "command": "ls -la" } },
+      "expected": {
+        "type": "tool.requested",
+        "data": { "tool": { "name": "shell", "call_id": "call_1" }, "args_digest": "1df8bccaec747dc615b50678f35bf5b5" },
+        "subject": "shell",
+        "$comment": "args only at capture full; args_redacted only at redacted; the digest is always present (AEP-0003 §9.3: digest over the original value)"
+      }
+    },
+    "PostToolUse": {
+      "input": { "hook_event_name": "PostToolUse", "session_id": "s_fix_1", "turn_id": "t_fix_1", "tool_name": "shell", "tool_use_id": "call_1", "tool_response": { "output": "total 0", "exit_code": 0 } },
+      "expected": {
+        "type": "tool.completed",
+        "data": { "tool": { "name": "shell", "call_id": "call_1" }, "result_digest": "23b8f930346a70ec5e43f5c98cc78c5e" },
+        "subject": "shell",
+        "$comment": "Codex has no separate tool-failure hook: non-zero exits also land here; tool.failed stays reserved for runtime-reported failures"
+      }
+    },
+    "PermissionRequest": {
+      "input": { "hook_event_name": "PermissionRequest", "session_id": "s_fix_1", "turn_id": "t_fix_1", "tool_name": "shell", "tool_input": { "command": "rm -rf build", "description": "clean build dir" } },
+      "expected": {
+        "type": "attention.requested",
+        "data": {
+          "kind": "permission",
+          "prompt": "Permission requested: shell — rm -rf build (clean build dir)",
+          "options": [ { "id": "allow", "label": "Allow" }, { "id": "deny", "label": "Deny" } ],
+          "respond_via": ["control"]
+        },
+        "subject": "shell",
+        "$comment": "attention.* defaults to the redacted ceiling, so the prompt passes the §9.4 redaction pipeline (unchanged for this benign input); at a metadata ceiling it degrades to the structural synthesis. The held-hook control round-trip (respond/timeout decisions) is runtime behavior, pinned by the reference smoke."
+      }
+    },
+    "SubagentStart": {
+      "input": { "hook_event_name": "SubagentStart", "session_id": "s_fix_1", "turn_id": "t_fix_1", "agent_id": "sub_1", "agent_type": "explore" },
+      "expected": {
+        "type": "delegation.subagent.started",
+        "data": { "agent_type": "explore" },
+        "subject": "sub_1"
+      }
+    },
+    "SubagentStop": {
+      "input": { "hook_event_name": "SubagentStop", "session_id": "s_fix_1", "turn_id": "t_fix_1", "agent_id": "sub_1" },
+      "expected": {
+        "type": "delegation.subagent.stopped",
+        "data": {},
+        "subject": "sub_1"
+      }
+    },
+    "PreCompact": {
+      "input": { "hook_event_name": "PreCompact", "session_id": "s_fix_1", "trigger": "auto" },
+      "expected": null
+    },
+    "PostCompact": {
+      "input": { "hook_event_name": "PostCompact", "session_id": "s_fix_1", "trigger": "auto" },
+      "expected": { "type": "session.compacted", "data": { "trigger": "auto" } }
+    }
+  },
+  "fallback": {
+    "$comment": "Unknown future hooks land in the vendor extension namespace (AEP-0001 §6 mechanical fallback, category `session`), never on a core type.",
+    "input": { "hook_event_name": "SomeFutureHook", "session_id": "s_fix_1" },
+    "expected": { "type": "x.codex.session.some_future_hook", "data": {} }
+  }
+}

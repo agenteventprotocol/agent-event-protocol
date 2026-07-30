@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/control.attention.respond.schema.json",
+  "title": "AEP payload: control.attention.respond",
+  "type": "object",
+  "properties": {
+    "answer": {
+      "type": "object",
+      "properties": {
+        "option": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "text": {
+          "type": "string",
+          "x-aep-capture": "redacted"
+        },
+        "values": {
+          "type": "object",
+          "x-aep-capture": "metadata",
+          "$comment": "answers a kind=form request (AEP-0006): flat map of field_spec.id -> answer, carried identically to attention.answered.answer.values and subject to the same type-dependent gating (string / `other` free-text entries redacted minimum; number/boolean/closed-select structural)"
+        }
+      },
+      "x-aep-capture": "metadata"
+    }
+  },
+  "required": [
+    "answer"
+  ],
+  "$comment": "subject of the command Event = id of the attention.requested Event (AEP-0004 \u00a75)"
+}

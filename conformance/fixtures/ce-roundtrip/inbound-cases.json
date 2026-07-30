@@ -1,0 +1,23 @@
+{
+  "$comment": "AEP-0005 §2 inbound (CE → AEP) preserve-path cases. Hand-authored CloudEvents objects fed to the inverse map DIRECTLY — the golden-derived ce-expected.jsonl only exercises round-trips of attributes the golden corpus already carries, so it cannot host an inbound-only case. Each case: the inbound CE object and the exact envelope the §2 rules produce (rule 1's bit-for-bit inverse; rule 2's preservation clauses). Cases derive from the golden[0] ↔ ce-expected[0] pair so the core mapping stays proven by the round-trip family; only the extension attributes under test differ. Both runners feed their inverse implementation directly and assert exact equality; run.py additionally asserts each expected envelope validates against the envelope schema.",
+  "cases": [
+    {
+      "name": "aep*-prefixed legal name preserved",
+      "rule": "AEP-0005 §2 rule 2 (MUST)",
+      "ce": { "specversion": "1.0", "id": "01JX9YB0AAAA0000000000INB1", "source": "aep://host-a/agent/claude-code/session/s_8f2c", "type": "dev.aep.session.started", "time": "2026-07-03T10:14:00.000Z", "datacontenttype": "application/json", "aepversion": "0.1", "aepagentid": "claude-code", "aepsessionid": "s_8f2c", "aepsequence": 0, "aepepoch": 0, "aepseverity": "info", "aepcapture": "metadata", "acmeregion": "eu-1", "aepfuture": "vnext-fact", "data": { "client": { "name": "claude-code", "version": "2.1.0" }, "gen_ai.request.model": "example-model-1", "parent": { "session": "s_root", "run": "r_0001" } } },
+      "expected": { "aep": "0.1", "id": "01JX9YB0AAAA0000000000INB1", "type": "session.started", "time": "2026-07-03T10:14:00.000Z", "source": "aep://host-a/agent/claude-code/session/s_8f2c", "agent": "claude-code", "session": "s_8f2c", "seq": 0, "epoch": 0, "severity": "info", "capture": "metadata", "acmeregion": "eu-1", "aepfuture": "vnext-fact", "data": { "client": { "name": "claude-code", "version": "2.1.0" }, "gen_ai.request.model": "example-model-1", "parent": { "session": "s_root", "run": "r_0001" } } }
+    },
+    {
+      "name": "plain legal extension name preserved",
+      "rule": "AEP-0005 §2 rule 2 (SHOULD, pinned at the reference behavior)",
+      "ce": { "specversion": "1.0", "id": "01JX9YB0AAAA0000000000INB2", "source": "aep://host-a/agent/claude-code/session/s_8f2c", "type": "dev.aep.session.started", "time": "2026-07-03T10:14:00.000Z", "datacontenttype": "application/json", "aepversion": "0.1", "aepagentid": "claude-code", "aepsessionid": "s_8f2c", "aepsequence": 0, "aepepoch": 0, "aepseverity": "info", "aepcapture": "metadata", "acmeregion": "eu-1", "vendorext": "batch-7", "data": { "client": { "name": "claude-code", "version": "2.1.0" }, "gen_ai.request.model": "example-model-1", "parent": { "session": "s_root", "run": "r_0001" } } },
+      "expected": { "aep": "0.1", "id": "01JX9YB0AAAA0000000000INB2", "type": "session.started", "time": "2026-07-03T10:14:00.000Z", "source": "aep://host-a/agent/claude-code/session/s_8f2c", "agent": "claude-code", "session": "s_8f2c", "seq": 0, "epoch": 0, "severity": "info", "capture": "metadata", "acmeregion": "eu-1", "vendorext": "batch-7", "data": { "client": { "name": "claude-code", "version": "2.1.0" }, "gen_ai.request.model": "example-model-1", "parent": { "session": "s_root", "run": "r_0001" } } }
+    },
+    {
+      "name": "grammar-illegal name dropped, the rest maps",
+      "rule": "AEP-0005 §2 rule 2 + AEP-0001 §5.4 ([a-z0-9]{1,20})",
+      "ce": { "specversion": "1.0", "id": "01JX9YB0AAAA0000000000INB3", "source": "aep://host-a/agent/claude-code/session/s_8f2c", "type": "dev.aep.session.started", "time": "2026-07-03T10:14:00.000Z", "datacontenttype": "application/json", "aepversion": "0.1", "aepagentid": "claude-code", "aepsessionid": "s_8f2c", "aepsequence": 0, "aepepoch": 0, "aepseverity": "info", "aepcapture": "metadata", "acmeregion": "eu-1", "aep_bad": "cannot-ride", "data": { "client": { "name": "claude-code", "version": "2.1.0" }, "gen_ai.request.model": "example-model-1", "parent": { "session": "s_root", "run": "r_0001" } } },
+      "expected": { "aep": "0.1", "id": "01JX9YB0AAAA0000000000INB3", "type": "session.started", "time": "2026-07-03T10:14:00.000Z", "source": "aep://host-a/agent/claude-code/session/s_8f2c", "agent": "claude-code", "session": "s_8f2c", "seq": 0, "epoch": 0, "severity": "info", "capture": "metadata", "acmeregion": "eu-1", "data": { "client": { "name": "claude-code", "version": "2.1.0" }, "gen_ai.request.model": "example-model-1", "parent": { "session": "s_root", "run": "r_0001" } } }
+    }
+  ]
+}

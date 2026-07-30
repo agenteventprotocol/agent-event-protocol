@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/session.started.schema.json",
+  "title": "AEP payload: session.started",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "parent": {
+      "type": "object",
+      "properties": {
+        "session": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "run": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "agent": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        }
+      },
+      "x-aep-capture": "metadata",
+      "required": [
+        "session"
+      ]
+    },
+    "client": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "version": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        }
+      },
+      "x-aep-capture": "metadata",
+      "required": [
+        "name"
+      ]
+    },
+    "gen_ai.request.model": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "cwd": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    }
+  }
+}

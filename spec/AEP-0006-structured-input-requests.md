@@ -1,0 +1,471 @@
+# AEP-0006: Structured Input Requests (`kind: "form"`)
+
+| Field | Value |
+|---|---|
+| **AEP** | 0006 |
+| **Title** | Structured Input Requests |
+| **Type** | Standards Track — Core |
+| **Status** | Accepted (2026-07-07: normative text, fixtures, and prototype landed in one change per GOVERNANCE.md §2) |
+| **Sponsor** | AEP maintainers (per GOVERNANCE.md §2) |
+| **Created** | 2026-07-07 |
+| **Requires** | AEP-0001 (envelope, capture), AEP-0002 (taxonomy, attention lifecycle), AEP-0003 §9 (capture/redaction pipeline) |
+| **Supersedes / Superseded-by** | n/a (additive to AEP-0002 §5.3 `attention.requested`) |
+
+## Abstract
+
+Adds a fifth `attention.requested` kind, `form`, and one payload object,
+`fields`, that generalizes today's `options` (single closed-choice) to a
+flat, typed, multi-field form: multiple named fields, each a string,
+number, boolean, or single/multi-select enum, each independently
+capture-gated. `attention.answered` gains a matching `values` object.
+
+No existing field, kind, or lifecycle state changes meaning; `kind: "form"` and
+`data.fields`/`data.values` are new, optional, ignorable by any consumer that
+predates this AEP. One vendor-neutral shape replaces what would otherwise be
+N per-vendor special cases (Claude Code's `AskUserQuestion`, MCP's
+`elicitation/create`, and whatever the next agent runtime calls the same
+idea).
+
+## Motivation
+
+The initial reference adapter mapping (the Claude Code adapter's
+`handleAskUserQuestion`, live-verified against a real session) mapped Claude
+Code's `AskUserQuestion` tool onto the *existing* `kind: "input"` +
+`options[{id,label}]` shape by emitting one `attention.requested` per question
+and holding an answer-barrier across all of them.
+
+That adapter-only fix is complete and correct for what it covers (a batch of
+independent single-select questions), but it is a workaround built on a payload
+shape designed for permission prompts (`options: [{id:"allow"},{id:"deny"}]`),
+not for general structured input. It exposed two real spec gaps rather than
+adapter bugs:
+
+1. **`options[].label` has no content-capture exception.** AEP-0002 §5.3
+   marks `attention.requested.prompt` `[metadata*]`: an explicit exception
+   letting it carry model-generated text at `redacted`+ while degrading to a
+   *structural* synthesis at `metadata` (AEP-0003 §9.2). `options[].label`
+   has no such exception; it is flatly `[metadata]`, which is correct for
+   `"Allow"`/`"Deny"` (structural, vendor-fixed strings) but wrong for
+   `"PostgreSQL"` or `"SQLite"` (model-generated content, exactly like
+   `prompt`).
+
+   Today's adapter works around this by treating option ids as 1-based indexes
+   and gating labels through the same `redacted` check as `prompt`: a
+   reasonable patch, but it is inventing a convention the schema doesn't
+   sanction.
+2. **No protocol-level batching or field typing.** "One `attention.requested`
+   per question, barrier on the client" is an adapter-local convention, not
+   something a consumer can discover or rely on. A question with a numeric
+   range, a boolean toggle, or several *simultaneous* fields (a compact form,
+   not N sequential prompts) has no expression at all: everything has to be
+   flattened into single-select choice lists or free text.
+
+Both gaps recur beyond Claude Code. MCP's `elicitation/create`
+(`requestedSchema`, a JSON-Schema subset restricted to flat objects of
+string/number/boolean/enum properties, `2025-06-18` spec) is the same
+concept with the same restriction-to-flat-primitives philosophy, arrived at
+independently.
+
+This convergence is notable: CC `PermissionRequest` and MCP elicitation are
+point-to-point (one consumer, no fan-out, no audit). AEP's attention lifecycle
+already solves the fan-out/audit half of that sentence; this AEP closes the
+"point-to-point" half by giving the *content* of a structured request a
+vendor-neutral shape too, instead of every adapter reinventing it against a
+payload built for yes/no prompts.
+
+**Fleet-observer test (AEP-0001 §3.2):** does a fleet observer act on this?
+Yes, identically to how it already acts on `kind: "permission"`/`"input"`:
+a human (or delegate) reads a question and answers it remotely. `kind:
+"form"` is not new *behavior* for a consumer, only a richer *payload* for
+the same lifecycle events it already renders.
+
+## Specification
+
+### AEP-0002 §5.3, `attention.requested`: replace the `kind` enum and add `fields`
+
+Current text (the two clauses being replaced):
+
+> `kind: enum(permission|input|auth|review|other) REQ [metadata]`
+>
+> `options?: [{ id: string, label: string }] [metadata]` (closed-choice
+> answers, e.g. allow/deny)
+
+New text:
+
+> `kind: enum(permission|input|auth|review|form|other) REQ [metadata]`
+> (`form` denotes a structured multi-field request; see `fields` below),
+> `options?: [{ id: string [metadata], label: string [metadata*] }]
+> [metadata]` (closed-choice answers; *gated by exception, same rule as
+> `prompt`: at capture `metadata` a `label` MUST be a structural placeholder
+> (e.g. the option's 1-based index as a string), never model-generated
+> content; at `redacted`+ it may carry the real label through the AEP-0003
+> §9.4 pipeline)`, `fields?: [field_spec] [metadata]` (present only when
+> `kind: "form"`; see below).
+
+For `kind: "form"` the (already-REQ) `prompt` carries the form's overall
+message or title; its existing `[metadata*]` exception rule applies to it
+unchanged.
+
+`field_spec` (new common payload object, joins `tool_ref`/`error_info`/`usage`
+in §5.2):
+
+```
+field_spec = {
+  id:          string                                    REQ [metadata]
+  type:        enum(string|number|boolean|select)         REQ [metadata]
+  label:       string                                     REQ [metadata*]  (same prompt/options exception: structural placeholder at metadata, real content at redacted+)
+  required:    boolean                                              [metadata]  (default false)
+  multi:       boolean                                              [metadata]  (default false; only meaningful when type:"select": multiple choices may be selected)
+  other:       boolean                                              [metadata]  (default false; type:"select" only: the responder MAY answer with free text instead of a choices[].id; see the values gating rule below)
+  choices:     [{ id: string [metadata], label: string [metadata*] }]  [metadata]  (REQUIRED when type:"select"; same label exception as above)
+  min:         number                                              [metadata]  (type:"number" only)
+  max:         number                                              [metadata]  (type:"number" only)
+}
+```
+
+This is deliberately the same four-primitive restriction MCP elicitation
+imposes on `requestedSchema` (string/number/boolean/enum, flat, no nesting,
+no arrays-of-objects). That is not coincidence: it matches the
+constrained-subset philosophy `schemas/codegen/generate.py` already enforces
+(its header comment: "objects of string/integer/boolean/enum/nested-object/array
+members, plus primitive union type lists. Anything else fails loudly").
+
+One honest caveat: the generator today maps only `integer`, not JSON Schema's
+`number` (`generate.py` lines 65/135/204); `field_spec` keeps `number` for MCP
+parity, so the prototype change MUST include the small generator extension, per
+the generator's own header rule ("extend the generator in the same change that
+extends the schema subset").
+
+`select` with `multi: true` covers `AskUserQuestion`'s `multiSelect`; `select`
+with `multi: false` (default) covers its single-select questions and today's
+`permission` `options` as a degenerate one-field case; `other: true`
+covers `AskUserQuestion`'s always-present custom-answer affordance: the
+path live verification actually exercised (custom free-text answers a closed
+`select` cannot express). This is a deliberate, evidence-driven divergence
+from MCP elicitation's closed `enum` (see Rationale).
+
+### AEP-0002 §5.3, `attention.answered`: add `values`
+
+Current text:
+
+> `answer: { option?: string [metadata], text?: string [redacted] } REQ`
+
+New text:
+
+> `answer: { option?: string [metadata], text?: string [redacted],
+> values?: object [metadata*] } REQ`
+>
+> `values` is present only answering a `kind: "form"` request. It is a flat map
+> of `field_spec.id` to the field's answer: a string for `type:"string"`, a
+> number for `type:"number"`, a boolean for `type:"boolean"`, a `choices[].id`
+> string for single-select, an array of `choices[].id` strings for
+> `multi:true`. For a `select` field with `other: true`, a free-text string
+> that is not a `choices[].id` is also allowed.
+>
+> *Gated by exception*: a `string`-typed field's value (and an `other`
+> free-text value on a `select` field) is user-authored text and follows the
+> same rule as `answer.text`: `redacted` minimum, never `metadata`;
+> `number`/`boolean`/closed single- or multi-`select` values are structural
+> (ids/primitives, never model- or user-authored prose) and stay `[metadata]`.
+>
+> An emitter MUST reject (`control.rejected{reason:"invalid"}`) a
+> `control.attention.respond` whose `values` does not cover every `field_spec`
+> with `required: true`, or that carries a non-`choices[].id` string for a
+> `select` field whose `other` is absent/false.
+
+### AEP-0002 §7, the attention lifecycle: no change
+
+`kind: "form"` uses the identical `requested → [routed]* → answered →
+resolved | timeout` lifecycle (AEP-0002 §7 rules 1 to 4) with no new states.
+One `attention.requested(kind="form")` carries an entire multi-field batch
+as a single event; this AEP does not require or recommend the
+one-event-per-field pattern the initial adapter mapping used for
+`AskUserQuestion`'s per-question cards; see Rationale for why the batch shape
+is preferred going forward, and Backward compatibility for what happens to
+that initial adapter.
+
+### AEP-0002 §6, registry: no closed-set change needed
+
+`kind` values are payload-internal enums (AEP-0002 §5.3), not registry-level
+`types.json` entries; adding `form` to the enum is the additive,
+minor-version change AEP-0002 §6 already describes for "adding an optional
+core type," applied here to an enum member rather than a whole type: no
+new row in `schemas/registry/types.json`.
+
+### `schemas/types/attention.requested.schema.json` / `attention.answered.schema.json`: updates
+
+- Add `"form"` to the `kind` enum.
+- Add `fields` (array of `field_spec` objects, `x-aep-capture: metadata`,
+  `label`/`choices[].label` marked with the same `$comment` exception
+  pattern `prompt` already uses).
+- Add `field_spec` as `schemas/registry/` common object or inline
+  `$defs` in the two schema files (codegen-generator decision, not
+  normative; either works against the existing generator subset).
+- `attention.answered.schema.json`: add `values` (`type: object`,
+  `x-aep-capture: metadata`, per-key gating documented in a `$comment`
+  since JSON Schema cannot express "gate depends on the referenced
+  field_spec.type" structurally; this is a normative prose rule enforced
+  by emitters/`aep validate`, not a schema-mechanical one).
+
+## Conformance fixtures
+
+Landed under `conformance/fixtures/` in the same change that moved this AEP
+to Accepted (GOVERNANCE.md §2, SEP rule):
+
+- `golden/golden.jsonl`: one `attention.requested(kind="form")` line with a
+  4-field form (one `string`, one `boolean`, one closed `select` with
+  `multi:true`, one `select` with `other:true`) and its matching
+  `attention.answered{answer:{values:{...}}}` (the `other` field answered
+  with free text) + `attention.resolved{resolution:"answered"}` pair
+  (session `s_form`).
+
+  Both runners schema-validate every golden line; `run.py` additionally asserts
+  the values rules and capture honesty on the pair, and `aep validate` (which
+  `run.js` drives) applies the same cross-event checks to any JSONL stream.
+- `capture-gating/cases.json`: **the new category, with runner support in
+  both `run.py` and `run.js` landed in this same change**: six cases proving
+  a `string`-type (and `other` free-text) `values` entry is dropped at
+  `capture: metadata` and present at `redacted`+, while closed-`select`/
+  `number`/`boolean` entries survive at `metadata`; the asymmetric gating
+  is the point of this AEP. `run.js` exercises the shared implementation
+  the reference adapter itself uses (`gateFormValues`); `run.py`
+  holds an independent implementation written from this spec text. (The
+  pre-existing `fixtures/redaction/cases.json` remains the AEP-0003 §9.4
+  *text-pipeline* adversarial corpus: a different layer, untouched.)
+- `invalid/cases.json`: a `kind="form"` event whose `select` field omits
+  `choices` (schema-mechanical: the field_spec items schema carries an
+  `if/then` conditional), and a two-event stream whose `attention.answered`
+  `values` carries a non-`choices[].id` string for a `select` field without
+  `other:true` (the cross-event prose rule, enforced independently by
+  `aep validate` and `run.py`). The missing-`required`-field *rejection* is
+  emitter behavior, exercised in the adapter smoke (case 6), not a
+  schema-validity fixture.
+- `mappings/claude-code.json`: the **first** fixture under
+  `conformance/fixtures/mappings/`, the directory AEP-0002 Annex A
+  anticipates ("as they gain fixtures"), for the Claude Code table:
+  `AskUserQuestion → kind="form"`, one event per call, replacing the initial
+  per-question `kind="input"` cards, pinned at both the `redacted`+ and
+  `metadata` ceilings so the label exception is machine-checked. `run.js`
+  pins the reference adapter's own mapping module; `run.py`, which
+  has no adapter implementation by design, checks each pinned payload's
+  schema validity and required wire facts.
+
+Both conformance runners (`conformance/run.py`, `conformance/run.js`) pass
+every fixture above, including the two new categories.
+
+## Prototype
+
+Landed with this AEP's acceptance (GOVERNANCE.md §2): the reference Claude
+Code adapter's `handleAskUserQuestion` emits one
+`kind="form"` event per `AskUserQuestion` call (the payload mapping is a
+pure module, pinned by
+the mappings fixture), validates `answer.values` per §5.3's MUST-reject rule
+(an invalid answer is nacked `control.rejected{reason:"invalid"}` and the
+request **stays pending**), gates emitted values type-dependently through
+`gateFormValues`, and returns `{behavior:"allow", updatedInput:{questions,
+answers}}` with values mapped back to Claude Code answers by field id.
+
+A reference consumer UI renders `fields` as an actual
+multi-field form (text/number input, checkbox, single- or multi-select,
+select-with-other per `field_spec.type`) with one submit that sends
+`answer.values` through the existing respond path (its answer
+type gained `values`).
+
+The adapter's earlier attention-loop smoke cases
+were evolved, not replaced:
+every behavior the earlier mapping proved is re-proved at the form level
+(content fidelity, the free-text "Other" path, the required-field nack,
+timeout fail-open, non-gating-surface dismissal), written first and watched
+fail against the earlier adapter before the swap.
+
+## Rationale
+
+**Why one `form` event per call, not one `attention.requested` per
+question (reversing the initial adapter mapping's own pattern)?** That
+mapping chose
+per-question events because it had to fit inside the *existing* `kind:
+"input"` shape, which has no concept of "this event is one of a batch."
+That forced an adapter-local answer-barrier (a `call` closure tracking
+`remaining`) that a generic consumer cannot discover from the wire: it just
+seems like several unrelated `attention.requested` events that happen to
+race.
+
+A single `form` event with a `fields` array makes the batch a wire fact: any
+consumer, not just one that knows Claude Code's tool-call internals, can render
+"3 fields, 1 form, 1 answer" correctly.
+
+This also removes the failure mode the initial adapter mapping had to
+special-case (partial answers on timeout, §5.3's "answered question stays
+resolved, unanswered gets timeout" split): a form's fields either all arrive in
+one `values` map or the whole form times out, which is simpler for every
+consumer to reason about, at the cost of finer-grained partial-progress
+visibility. That trade is deliberately made here, not smuggled in.
+
+**Why restrict `field_spec` to four primitive types with no nesting**,
+when JSON Schema (and MCP's `requestedSchema`) could in principle allow
+more? Two independent arguments converge: (1) MCP elicitation's own spec
+text ("intentionally not supported to simplify client implementation")
+made the identical call for the identical reason; (2) AEP's `schemas/
+codegen/generate.py` already only supports this exact subset ("Anything
+else fails loudly: extend the generator in the same change that extends
+the schema subset").
+
+Choosing anything richer would mean extending codegen *and* asking every future
+consumer to implement a bigger form language, for a case (rich nested input)
+attention requests are not actually used for today. This mirrors the design
+argument behind `attr-match` ("deliberately not a language", AEP-0003 §6): the
+same discipline applied to form fields.
+
+**Why add `other: true` when MCP elicitation's `enum` is closed?** Because
+the evidence demands it: live verification answered through the custom-text
+path, and
+`AskUserQuestion`'s UI offers "Other" on every question. A closed `select`
+would make the *most-used observed behavior* inexpressible and regress the
+exact scenario that motivated this AEP. This is the one deliberate
+divergence from the MCP cross-check, and it is opt-in per field (default
+`false` keeps the MCP-congruent closed shape).
+
+**Why not adopt ACP's four-way `PermissionOptionKind`
+(`allow_once`/`allow_always`/`reject_once`/`reject_always`)?** It is a real,
+useful idea, but it is orthogonal to this AEP: it extends `kind:
+"permission"`'s `options`, not the general form case, and deserves its own
+narrower proposal if a real adapter need surfaces (no current adapter asks
+for "always allow" semantics; AEP-0004's control profile doesn't yet have a
+concept of a standing decision policy to attach it to). Scoping it in here
+would couple two unrelated design questions.
+
+**Why generalize now instead of waiting for a second real vendor need
+(the general caution against over-designing against one
+UI)?** MCP elicitation *is* the second vendor need: it exists today,
+independently, with the same shape. This AEP is designed against MCP's
+`requestedSchema`/`ElicitResult` (four primitive types, flat, three-action
+response) as the primary cross-check, with `AskUserQuestion` as the
+motivating case, precisely so it does not calcify around Claude Code's
+specific 1-4-questions/2-4-options/12-char-header UI. Section "Backward
+compatibility" below shows the MCP mapping explicitly for this reason.
+
+## Backward compatibility
+
+Additive within AEP-0002's evolution bias (AEP-0001 §11): a new `kind` enum
+member and two new optional payload fields (`fields`, `values`). Every
+existing `attention.requested(kind="permission"|"input"|"auth"|"review"|
+"other")` event and its schema stay byte-for-byte valid. Two distinct
+consumer populations, stated honestly rather than blurred:
+
+- **Render-level consumers** (Mission Control, sinks, routers) that read
+  `kind` as a string degrade gracefully: an unknown `"form"` renders as its
+  REQ `prompt` plus a free-text reply box, less richly but never incorrectly.
+- **Schema-pinned validators** (`aep validate` against a published 0.1
+  schema set, strict enum) would *reject* a `kind:"form"` event, because the
+  `kind` enum is closed. Two timelines, one rule:
+  - **Accepted before v0.1 tags** (the repo is pre-release; every spec is
+    Draft): the change folds into the v0.1 Draft directly. AEP-0002 §5.3
+    text and the 0.1 schemas are updated in place, there is no published
+    consumer to protect, and no version dance occurs. This is the cheaper
+    path and the recommended one if this AEP lands during the current
+    pre-release window.
+  - **Accepted after v0.1 ships**: the change rides a **minor version (0.2
+    schemas)** (the same additive/minor mechanics AEP-0002 §6 defines for
+    adding an optional core type, applied to an enum member), and emitters
+    MUST NOT emit `kind:"form"` while declaring `aep: "0.1"`.
+
+**Effect on the initial adapter code specifically:** `handleAskUserQuestion`
+(shipped and live-verified before this AEP existed) was not wrong. It was a
+correct, complete mapping onto the *pre-AEP-0006* payload shape, and it stayed
+exactly as deployed until this AEP was Accepted with its prototype (the same
+change).
+
+The per-question `kind:"input"` events became one
+`kind:"form"` event; this was a **within-adapter** migration (swap the
+emission shape in `handleAskUserQuestion`, keep the surrounding hook
+plumbing, timeout timer, and dismissal logic, which already operated at the
+call level via the `call` closure; the code was *closer* to the
+`form` shape than to independent events, since `call.remaining`/
+`call.answers` already tracked the whole batch, not each question
+separately).
+
+The underlying attention-loop mechanics (control round-trip,
+`updatedInput` suppressing CC's own dialog, free-text "Other") are
+unchanged: this AEP changes the payload's shape, not the loop.
+
+**Effect on consuming UIs:** a consumer's existing option-reading and
+button-rendering paths for `kind: "permission"`/`"input"` cards keep working
+unchanged. Rendering `kind: "form"` is new, additive UI work: a
+consumer does not need to change to stay correct; it changes only to render
+the new kind *well*, landing together with the adapter half so question
+cards never degrade during a rollout.
+
+**Effect on the Codex adapter:** none. Codex exposes no clarifying-question
+hook today (confirmed against its current documentation and a live pass);
+this AEP's mapping is ready the day one appears, with MCP
+elicitation as the second concrete adapter target in the meantime (Claude
+Code, as an MCP *client*, could in principle surface elicitation through
+the same `kind: "form"` shape, an available but out-of-scope-for-now
+extension noted under Open questions).
+
+## Security considerations
+
+**Capture/redaction (AEP-0003 §9).** This is the section this AEP changes
+the most: today's flat `options[].label: [metadata]` silently permits
+content leakage risk in the *other* direction: because there is no
+exception clause, a strict reading requires vendor-fixed strings only, so
+the initial adapter's practice of gating labels through `redacted`
+(matching `prompt`'s existing exception) was *following the spirit* of
+AEP-0003 §9 while technically extending an un-excepted field.
+
+This AEP closes that gap by giving `field_spec.label`/`choices[].label` the
+same explicit `[metadata*]` exception `prompt` already has, and by making the
+`values` gating rule **type-dependent** rather than uniform: a `string` field is
+free text (an operator's or user's own words, `redacted` minimum, mirroring
+`answer.text`), while `number`/`boolean`/`select` values are structural
+identifiers with no more content-leakage risk than `answer.option` today.
+
+Getting this asymmetry wrong in either direction is a real defect class:
+over-gating breaks legitimate structural data at `metadata` ceilings,
+under-gating leaks free-text form answers at a ceiling meant to exclude them (a
+high-severity shape observed where free text was silently dropped in the *other*
+direction; here the risk is silently *retained* above ceiling). The redaction
+fixture required above exists specifically to make this asymmetry a
+conformance-tested invariant, not adapter-author discipline.
+
+The same invariant holds at **fan-out hops**
+(AEP-0001 §8.2): a hop rewriting `capture` below `redacted` has no source
+context to classify `values` entries or synthesize labels, so it degrades
+the `[metadata*]` fields structurally (prompt synthesis, labels → ids,
+`values` → structural entries only). This AEP's acceptance review found
+and fixed a reference implementation that retained that content across a
+hop; the corpus that pins it is `conformance/fixtures/downlevel/`.
+
+**Control authorization (AEP-0004).** No change: `control.attention.respond`
+carries `answer` today and `answer.values` under this AEP identically:
+the same `subject`/`cause` correlation and `control.accepted`/
+`control.rejected` ack rules apply unchanged. The new "reject if a required
+field is unanswered" rule (§ above) is a new `control.rejected{reason:
+"invalid"}` trigger, not a new rejection *reason* or authorization
+concept.
+
+**Identity/bridges (AEP-0005).** No change to bridge annexes: `fields`/
+`values` are ordinary `data` payload content and cross the CE/OTLP bridges
+under the existing content-mapping rules for `attention.*` types.
+
+## Open questions
+
+- **Should Claude Code's own MCP-client role surface `elicitation/create`
+  through this same `kind: "form"` mapping?** Natural and probably
+  desirable (it is literally the cross-check this AEP was designed
+  against), but out of scope for the reference prototype, which targets
+  `AskUserQuestion` only. Revisit once a design partner actually runs
+  CC-as-MCP-client through the adapter (no evidence either way yet):
+  post-v0.1, alongside the `message`/`stream` sub-profile question, since
+  both concern MCP-adjacent surfaces not yet exercised end-to-end.
+- **Should `field_spec` support a `pattern` (regex) constraint for
+  `type:"string"`,** mirroring MCP's `format: email|uri|date|date-time`?
+  Deferred: no adapter need observed yet, and every addition to
+  `field_spec` is another thing every consumer must at least tolerate.
+  Pull forward only if a real elicitation/AskUserQuestion case needs
+  validated input, not free text.
+- **ACP's `allow_once`/`allow_always`/`reject_once`/`reject_always`
+  option-kind idea** (Rationale, above) is explicitly parked as a separate,
+  future, narrower proposal against `kind: "permission"`, not folded into
+  this one. Owner: whoever picks it up; no milestone, no current adapter
+  pressure.

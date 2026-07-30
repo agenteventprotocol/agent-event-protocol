@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/agent.idle.schema.json",
+  "title": "AEP payload: agent.idle",
+  "type": "object",
+  "properties": {
+    "since_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "reason": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    }
+  }
+}

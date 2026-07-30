@@ -1,0 +1,393 @@
+{
+  "0": {
+    "class_uid": 3002,
+    "category_uid": 3,
+    "activity_id": 1,
+    "type_uid": 300201,
+    "time": 1783073640000,
+    "severity_id": 1,
+    "message": "session.started",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YB0AAAA0000000000GOLD",
+      "original_time": "2026-07-03T10:14:00.000Z",
+      "product": {
+        "name": "claude-code"
+      }
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YB0AAAA0000000000GOLD",
+        "type": "session.started",
+        "time": "2026-07-03T10:14:00.000Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "seq": 0,
+        "epoch": 0,
+        "severity": "info",
+        "capture": "metadata",
+        "acmeregion": "eu-1"
+      },
+      "data": {
+        "client": {
+          "name": "claude-code",
+          "version": "2.1.0"
+        },
+        "gen_ai.request.model": "claude-sonnet-5",
+        "parent": {
+          "session": "s_root",
+          "run": "r_0001"
+        }
+      }
+    },
+    "status_id": 1,
+    "user": {
+      "name": "claude-code"
+    },
+    "session": {
+      "uid": "s_8f2c"
+    }
+  },
+  "3": {
+    "class_uid": 1007,
+    "category_uid": 1,
+    "activity_id": 2,
+    "type_uid": 100702,
+    "time": 1783073704221,
+    "severity_id": 1,
+    "message": "tool.completed",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YB3P4T90000000000GOLD",
+      "original_time": "2026-07-03T10:15:04.221Z",
+      "product": {
+        "name": "claude-code"
+      },
+      "correlation_uid": "01JX9YB2Z1QK0000000000GOLD"
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YB3P4T90000000000GOLD",
+        "type": "tool.completed",
+        "subject": "Bash",
+        "time": "2026-07-03T10:15:04.221Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "run": "r_0042",
+        "step": "turn-3",
+        "seq": 3,
+        "epoch": 0,
+        "cause": "01JX9YB2Z1QK0000000000GOLD",
+        "severity": "info",
+        "capture": "metadata",
+        "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      },
+      "data": {
+        "tool": {
+          "name": "Bash",
+          "call_id": "t_91"
+        },
+        "status": "success",
+        "duration_ms": 1240,
+        "gen_ai.usage.input_tokens": 142,
+        "gen_ai.usage.output_tokens": 87
+      }
+    },
+    "status_id": 1,
+    "actor": {
+      "app_name": "claude-code"
+    },
+    "device": {
+      "type_id": 0,
+      "hostname": "host-a"
+    },
+    "process": {
+      "name": "Bash",
+      "uid": "t_91"
+    }
+  },
+  "4": {
+    "class_uid": 2004,
+    "category_uid": 2,
+    "activity_id": 1,
+    "type_uid": 200401,
+    "time": 1783073705000,
+    "severity_id": 2,
+    "message": "attention.requested",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YB4RQ000000000000GOLD",
+      "original_time": "2026-07-03T10:15:05.000Z",
+      "product": {
+        "name": "claude-code"
+      },
+      "correlation_uid": "01JX9YB3P4T90000000000GOLD"
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YB4RQ000000000000GOLD",
+        "type": "attention.requested",
+        "subject": "Bash",
+        "time": "2026-07-03T10:15:05.000Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "run": "r_0042",
+        "seq": 4,
+        "epoch": 0,
+        "cause": "01JX9YB3P4T90000000000GOLD",
+        "severity": "notice",
+        "capture": "redacted"
+      }
+    },
+    "status_id": 1,
+    "finding_info": {
+      "uid": "01JX9YB4RQ000000000000GOLD",
+      "title": "attention.requested"
+    }
+  },
+  "9": {
+    "class_uid": 2004,
+    "category_uid": 2,
+    "activity_id": 3,
+    "type_uid": 200403,
+    "time": 1783073709250,
+    "severity_id": 1,
+    "message": "attention.resolved",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YB9RSV00000000000GOLD",
+      "original_time": "2026-07-03T10:15:09.250Z",
+      "product": {
+        "name": "claude-code"
+      },
+      "correlation_uid": "01JX9YB8ANS00000000000GOLD"
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YB9RSV00000000000GOLD",
+        "type": "attention.resolved",
+        "subject": "01JX9YB4RQ000000000000GOLD",
+        "time": "2026-07-03T10:15:09.250Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "seq": 7,
+        "epoch": 0,
+        "cause": "01JX9YB8ANS00000000000GOLD",
+        "capture": "metadata"
+      },
+      "data": {
+        "resolution": "answered",
+        "latency_ms": 4250
+      }
+    },
+    "status_id": 4,
+    "finding_info": {
+      "uid": "01JX9YB4RQ000000000000GOLD",
+      "title": "attention.resolved"
+    }
+  },
+  "13": {
+    "class_uid": 1007,
+    "category_uid": 1,
+    "activity_id": 1,
+    "type_uid": 100701,
+    "time": 1783073712500,
+    "severity_id": 3,
+    "message": "tool.denied",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YBJDNY00000000000GOLD",
+      "original_time": "2026-07-03T10:15:12.500Z",
+      "product": {
+        "name": "claude-code"
+      },
+      "profiles": [
+        "security_control"
+      ]
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YBJDNY00000000000GOLD",
+        "type": "tool.denied",
+        "subject": "Bash",
+        "time": "2026-07-03T10:15:12.500Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "run": "r_0043",
+        "seq": 11,
+        "epoch": 0,
+        "severity": "warning",
+        "capture": "metadata"
+      },
+      "data": {
+        "tool": {
+          "name": "Bash",
+          "call_id": "t_92"
+        },
+        "by": "policy",
+        "rule": "deny Bash(rm:*)"
+      }
+    },
+    "status_id": 2,
+    "disposition_id": 2,
+    "actor": {
+      "app_name": "claude-code"
+    },
+    "device": {
+      "type_id": 0,
+      "hostname": "host-a"
+    },
+    "process": {
+      "name": "Bash",
+      "uid": "t_92"
+    }
+  },
+  "15": {
+    "class_uid": 1007,
+    "category_uid": 1,
+    "activity_id": 2,
+    "type_uid": 100702,
+    "time": 1783073713310,
+    "severity_id": 4,
+    "message": "tool.failed",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YBMTFL00000000000GOLD",
+      "original_time": "2026-07-03T10:15:13.310Z",
+      "product": {
+        "name": "claude-code"
+      },
+      "correlation_uid": "01JX9YBKTRQ00000000000GOLD"
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YBMTFL00000000000GOLD",
+        "type": "tool.failed",
+        "subject": "Write",
+        "time": "2026-07-03T10:15:13.310Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "run": "r_0043",
+        "step": "turn-1",
+        "seq": 13,
+        "epoch": 0,
+        "cause": "01JX9YBKTRQ00000000000GOLD",
+        "severity": "error",
+        "capture": "redacted"
+      }
+    },
+    "status_id": 2,
+    "actor": {
+      "app_name": "claude-code"
+    },
+    "device": {
+      "type_id": 0,
+      "hostname": "host-a"
+    },
+    "process": {
+      "name": "Write"
+    }
+  },
+  "19": {
+    "class_uid": 2004,
+    "category_uid": 2,
+    "activity_id": 3,
+    "type_uid": 200403,
+    "time": 1783073751000,
+    "severity_id": 2,
+    "message": "attention.timeout",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YBRATO00000000000GOLD",
+      "original_time": "2026-07-03T10:15:51.000Z",
+      "product": {
+        "name": "claude-code"
+      },
+      "correlation_uid": "01JX9YBQARQ20000000000GOLD",
+      "profiles": [
+        "security_control"
+      ]
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YBRATO00000000000GOLD",
+        "type": "attention.timeout",
+        "subject": "01JX9YBQARQ20000000000GOLD",
+        "time": "2026-07-03T10:15:51.000Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "run": "r_0044",
+        "seq": 17,
+        "epoch": 0,
+        "cause": "01JX9YBQARQ20000000000GOLD",
+        "severity": "notice",
+        "capture": "metadata"
+      },
+      "data": {
+        "after_ms": 30000
+      }
+    },
+    "disposition_id": 16,
+    "finding_info": {
+      "uid": "01JX9YBQARQ20000000000GOLD",
+      "title": "attention.timeout"
+    }
+  },
+  "23": {
+    "class_uid": 3002,
+    "category_uid": 3,
+    "activity_id": 2,
+    "type_uid": 300202,
+    "time": 1783073759000,
+    "severity_id": 1,
+    "message": "session.ended",
+    "metadata": {
+      "version": "1.8.0",
+      "uid": "01JX9YBWSND00000000000GOLD",
+      "original_time": "2026-07-03T10:15:59.000Z",
+      "product": {
+        "name": "claude-code"
+      }
+    },
+    "unmapped": {
+      "aep": {
+        "aep": "0.1",
+        "id": "01JX9YBWSND00000000000GOLD",
+        "type": "session.ended",
+        "time": "2026-07-03T10:15:59.000Z",
+        "source": "aep://host-a/agent/claude-code/session/s_8f2c",
+        "agent": "claude-code",
+        "session": "s_8f2c",
+        "seq": 20,
+        "epoch": 0,
+        "capture": "metadata"
+      },
+      "data": {
+        "reason": "normal",
+        "duration_ms": 119000,
+        "runs": 3
+      }
+    },
+    "status_id": 1,
+    "user": {
+      "name": "claude-code"
+    },
+    "session": {
+      "uid": "s_8f2c"
+    }
+  }
+}

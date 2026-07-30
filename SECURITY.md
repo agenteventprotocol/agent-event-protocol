@@ -1,0 +1,29 @@
+# Security Policy
+
+## Reporting a vulnerability
+
+AEP is pre-release. Report vulnerabilities privately via the repository's **Security tab → "Report a vulnerability"** (GitHub private vulnerability reporting). Do not open a public issue.
+
+## Supported versions
+
+Only the main branch is actively supported. Pre-release versions carry no support warranty. Security fixes will be included in the v0.1 release and all subsequent versions.
+
+## Redaction as security control
+
+AEP implements a **four-stage redaction pipeline** to prevent sensitive data leakage from event payloads (see [AEP-0003 §9.4](spec/AEP-0003-bindings-and-lifecycle.md)). The reference implementation lives in the reference repository, [`agenteventprotocol/reference`](https://github.com/agenteventprotocol/reference).
+
+**Any payload that escapes the redaction pipeline is treated as a security defect.** Such findings are filed as vulnerabilities, and the fix lands together with a new adversarial case in [conformance/fixtures/redaction/](conformance/fixtures/redaction/) in the same change. No redaction fix ships untested.
+
+Adversarial test cases and redaction fixtures are maintained in the conformance suite as the arbiter for redaction correctness.
+
+## Scope
+
+The reference relay (`aep-relay`) is designed for **local and trusted-network deployment** only. It implements token-based authentication but does not assume TLS or public-internet exposure. Do not expose the relay to untrusted networks without additional hardening.
+
+## Automated scanning
+
+Every code repository in the organization carries a Dependabot configuration for dependency update monitoring. GitHub code scanning (CodeQL default setup) is part of the organization's security baseline for its code repositories and is enabled per repository once it is public. Scanning findings are triaged through the same process as reported vulnerabilities above. This statement is canonical for the whole organization: repositories without their own `SECURITY.md` inherit the organization default, which defers here.
+
+## Response expectations
+
+Maintainers will acknowledge reported vulnerabilities and work to fix them before the next release. No calendar-based timelines are made; the fix ships when it ships, and critical issues may accelerate a release.

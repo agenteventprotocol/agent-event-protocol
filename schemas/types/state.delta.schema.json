@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/state.delta.schema.json",
+  "title": "AEP payload: state.delta",
+  "type": "object",
+  "properties": {
+    "delta": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "x-aep-capture": "redacted"
+    },
+    "key": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "rev": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

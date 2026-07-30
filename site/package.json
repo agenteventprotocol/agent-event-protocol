@@ -1,0 +1,17 @@
+{
+  "name": "aep-docs-site",
+  "private": true,
+  "type": "module",
+  "description": "Static site generator for the Agent Event Protocol documentation.",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node serve.mjs",
+    "dev": "node dev.mjs",
+    "vendor-fonts": "node vendor-fonts.mjs"
+  },
+  "dependencies": {
+    "marked": "^15",
+    "mermaid": "^11",
+    "shiki": "^4"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/assessment.guardrail.recorded.schema.json",
+  "title": "AEP payload: assessment.guardrail.recorded",
+  "type": "object",
+  "properties": {
+    "guardrail": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": ["input", "output"],
+          "x-aep-capture": "metadata"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["allowed", "flagged", "blocked", "modified"],
+          "x-aep-capture": "metadata"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "x-aep-capture": "metadata"
+              },
+              "score": {
+                "type": "number",
+                "x-aep-capture": "metadata"
+              }
+            },
+            "x-aep-capture": "metadata"
+          },
+          "x-aep-capture": "metadata"
+        },
+        "detector": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "x-aep-capture": "metadata"
+            },
+            "version": {
+              "type": "string",
+              "x-aep-capture": "metadata"
+            }
+          },
+          "x-aep-capture": "metadata"
+        },
+        "explanation": {
+          "type": "string",
+          "x-aep-capture": "redacted"
+        }
+      },
+      "x-aep-capture": "metadata"
+    }
+  }
+}

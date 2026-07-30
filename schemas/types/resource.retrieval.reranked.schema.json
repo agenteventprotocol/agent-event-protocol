@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/resource.retrieval.reranked.schema.json",
+  "title": "AEP payload: resource.retrieval.reranked",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "query_digest": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "model": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "top_k": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "input_documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-aep-capture": "metadata"
+          },
+          "score": {
+            "type": "number",
+            "x-aep-capture": "metadata"
+          },
+          "content_redacted": {
+            "type": "string",
+            "x-aep-capture": "redacted"
+          },
+          "content": {
+            "type": "string",
+            "x-aep-capture": "full"
+          },
+          "metadata": {
+            "type": "object",
+            "x-aep-capture": "metadata"
+          }
+        },
+        "x-aep-capture": "metadata"
+      },
+      "x-aep-capture": "metadata"
+    },
+    "output_documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-aep-capture": "metadata"
+          },
+          "score": {
+            "type": "number",
+            "x-aep-capture": "metadata"
+          },
+          "content_redacted": {
+            "type": "string",
+            "x-aep-capture": "redacted"
+          },
+          "content": {
+            "type": "string",
+            "x-aep-capture": "full"
+          },
+          "metadata": {
+            "type": "object",
+            "x-aep-capture": "metadata"
+          }
+        },
+        "x-aep-capture": "metadata"
+      },
+      "x-aep-capture": "metadata"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

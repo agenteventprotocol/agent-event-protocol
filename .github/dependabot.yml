@@ -1,0 +1,12 @@
+# Automated dependency updates. CI here has no package-manager dependencies
+# (the tooling is fetched pinned inside the workflow), so only the GitHub
+# Actions themselves are tracked.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

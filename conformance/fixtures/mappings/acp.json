@@ -1,0 +1,521 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the ACP table (the Agent Client Protocol, editor<->agent), verified against the pinned schema (agentclientprotocol/agent-client-protocol schema-v1.19.0, 142 definitions; npm @agentclientprotocol/sdk 1.2.1 — design record: docs/components/bridge-acp-design.md). The tee reduces the newline-framed JSON-RPC wire to MOMENTS (request/response/notification — responses joined to their request method by JSON-RPC id, which is tee runtime state) and each entry pins the pure moment->events mapping at the bridge default posture (capture metadata; attention.* redacted; deltas OFF): expected is an ARRAY of {type, data, subject?}; entries whose behavior forks under the AEP_ACP_DELTAS opt-in (which pairs with capture redacted for content) carry deltas_expected. Identity (sessionId verbatim; the run = the prompt turn, id scoped per session; toolCallId pairing; approval request/outcome pairing) and byte-transparency are tee wiring, smoke-pinned in the reference repository. READ-ONLY: the bridge never initiates, answers, or injects; the editor gate is observed with no options claim and outcomes via oob. STATED: the command-substitution tee attach is wire-compatible in every ACP editor and blessed nowhere in the spec.",
+ "identity": {
+  "session_from": "params.sessionId | session/new response result.sessionId (real vendor identity, verbatim)",
+  "run_from": "the session/prompt request JSON-RPC id scoped to the session (tee runtime; real wire identity, no synthesis)",
+  "$comment": "toolCallId pairs the tool trio; the permission request/outcome pair is joined by JSON-RPC id in the tee."
+ },
+ "moments": {
+  "request_session_prompt": {
+   "input": {
+    "kind": "request",
+    "method": "session/prompt",
+    "params": {
+     "sessionId": "sess_1",
+     "prompt": [
+      {
+       "type": "text",
+       "text": "fix the failing build"
+      }
+     ]
+    }
+   },
+   "expected": [
+    {
+     "type": "run.started",
+     "data": {
+      "trigger": "user",
+      "message_digest": "fbc514e9fc7d86fd1ebd3442af65801d"
+     }
+    }
+   ],
+   "$comment": "opens the run at the prompt request; content digested at metadata, redacted at redacted+; the run id (the request JSON-RPC id scoped to the session) is tee runtime state"
+  },
+  "request_permission": {
+   "input": {
+    "kind": "request",
+    "method": "session/request_permission",
+    "params": {
+     "sessionId": "sess_1",
+     "toolCall": {
+      "toolCallId": "tc9",
+      "title": "sudo make install",
+      "kind": "execute"
+     },
+     "options": [
+      {
+       "optionId": "allow_once",
+       "name": "Allow once",
+       "kind": "allow_once"
+      },
+      {
+       "optionId": "reject_once",
+       "name": "Reject",
+       "kind": "reject_once"
+      }
+     ]
+    }
+   },
+   "expected": [
+    {
+     "type": "attention.requested",
+     "data": {
+      "kind": "permission",
+      "prompt": "Permission requested: sudo make install",
+      "options_count": 2
+     },
+     "subject": "tc9"
+    }
+   ],
+   "$comment": "the EDITOR gate observed READ-ONLY: no options claim, no respond_via — the option list rides as a count; prompt synthesized from structure at metadata, the tool title at redacted+ (this pin is at the default attention ceiling: redacted)"
+  },
+  "request_session_cancel": {
+   "input": {
+    "kind": "request",
+    "method": "session/cancel",
+    "params": {
+     "sessionId": "sess_1"
+    }
+   },
+   "expected": [
+    {
+     "type": "x.acp.session.cancel",
+     "data": {}
+    }
+   ]
+  },
+  "request_machinery": {
+   "input": {
+    "kind": "request",
+    "method": "fs/read_text_file",
+    "params": {
+     "sessionId": "sess_1",
+     "path": "/x"
+    }
+   },
+   "expected": [
+    {
+     "type": "x.acp.fs.read.text.file",
+     "data": {}
+    }
+   ]
+  },
+  "request_single_word": {
+   "input": {
+    "kind": "request",
+    "method": "initialize",
+    "params": {
+     "protocolVersion": 1
+    }
+   },
+   "expected": [
+    {
+     "type": "x.acp.initialize.event",
+     "data": {}
+    }
+   ],
+   "$comment": "the envelope type pattern needs two segments after the vendor token — single-word methods gain the mechanical .event suffix (caught by aep validate at build time)"
+  },
+  "response_session_new": {
+   "input": {
+    "kind": "response",
+    "method": "session/new",
+    "result": {
+     "sessionId": "sess_1"
+    }
+   },
+   "expected": [
+    {
+     "type": "session.started",
+     "data": {
+      "client": {
+       "name": "acp"
+      }
+     }
+    }
+   ]
+  },
+  "response_prompt_end_turn": {
+   "input": {
+    "kind": "response",
+    "method": "session/prompt",
+    "result": {
+     "stopReason": "end_turn"
+    }
+   },
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {
+      "stop_reason": "end_turn"
+     }
+    }
+   ],
+   "$comment": "bounded terminations are COMPLETIONS with the stop reason as metadata"
+  },
+  "response_prompt_max_tokens": {
+   "input": {
+    "kind": "response",
+    "method": "session/prompt",
+    "result": {
+     "stopReason": "max_tokens"
+    }
+   },
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {
+      "stop_reason": "max_tokens"
+     }
+    }
+   ],
+   "$comment": "max_tokens is a bounded termination, not a failure"
+  },
+  "response_prompt_cancelled": {
+   "input": {
+    "kind": "response",
+    "method": "session/prompt",
+    "result": {
+     "stopReason": "cancelled"
+    }
+   },
+   "expected": [
+    {
+     "type": "run.cancelled",
+     "data": {
+      "by": "user"
+     }
+    }
+   ],
+   "$comment": "the client-initiated interrupt: run.cancelled by user"
+  },
+  "response_prompt_refusal": {
+   "input": {
+    "kind": "response",
+    "method": "session/prompt",
+    "result": {
+     "stopReason": "refusal"
+    }
+   },
+   "expected": [
+    {
+     "type": "run.failed",
+     "data": {
+      "reason": "refusal"
+     }
+    }
+   ],
+   "$comment": "refusal is the one failing stop reason"
+  },
+  "response_permission_selected": {
+   "input": {
+    "kind": "response",
+    "method": "session/request_permission",
+    "result": {
+     "outcome": {
+      "outcome": "selected",
+      "optionId": "allow_once"
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "attention.answered",
+     "data": {
+      "answer": {
+       "option": "allow_once"
+      },
+      "via": "oob"
+     }
+    }
+   ],
+   "$comment": "the human decided in the editor UI — via oob, the selected optionId verbatim; pairing and the follow-up attention.resolved are tee runtime state"
+  },
+  "response_permission_cancelled": {
+   "input": {
+    "kind": "response",
+    "method": "session/request_permission",
+    "result": {
+     "outcome": {
+      "outcome": "cancelled"
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "dismissed"
+     }
+    }
+   ],
+   "$comment": "a cancelled outcome resolves as dismissed"
+  },
+  "update_tool_call": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "tool_call",
+      "toolCallId": "tc1",
+      "title": "run tests",
+      "kind": "execute",
+      "status": "pending",
+      "rawInput": {
+       "command": "npm test"
+      }
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "run tests",
+       "call_id": "tc1"
+      },
+      "kind": "execute",
+      "args_digest": "9178ac939ad908d8fd89e97596cdc0e5"
+     },
+     "subject": "tc1"
+    }
+   ]
+  },
+  "update_tool_in_progress": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "tc1",
+      "title": "run tests",
+      "status": "in_progress"
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "x.acp.tool_call.update",
+     "data": {
+      "status": "in_progress"
+     },
+     "subject": "tc1"
+    }
+   ]
+  },
+  "update_tool_completed": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "tc1",
+      "title": "run tests",
+      "status": "completed",
+      "rawOutput": {
+       "output": "ok 42 tests"
+      }
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "run tests",
+       "call_id": "tc1"
+      },
+      "result_digest": "7811f89e5155f3d9b75fba7dc9ca3048"
+     },
+     "subject": "tc1"
+    }
+   ]
+  },
+  "update_tool_failed": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "tool_call_update",
+      "toolCallId": "tc2",
+      "title": "read file",
+      "status": "failed"
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.failed",
+     "data": {
+      "tool": {
+       "name": "read file",
+       "call_id": "tc2"
+      },
+      "error": {
+       "type": "tool_error"
+      }
+     },
+     "subject": "tc2"
+    }
+   ],
+   "$comment": "the failed status forks honestly onto tool.failed"
+  },
+  "update_plan": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "plan",
+      "entries": [
+       {
+        "content": "write the fix",
+        "priority": "high",
+        "status": "pending"
+       },
+       {
+        "content": "run the suite",
+        "priority": "medium",
+        "status": "pending"
+       },
+       {
+        "content": "read the logs",
+        "priority": "low",
+        "status": "completed"
+       }
+      ]
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "x.acp.plan.updated",
+     "data": {
+      "entries_pending": 2,
+      "entries_completed": 1
+     }
+    }
+   ],
+   "$comment": "the honesty call: ACP plan entries carry NO id — status counts only, never invented progress.task.* transitions (the id-keyed diffTodos precedent does not transfer)"
+  },
+  "update_agent_chunk": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "agent_message_chunk",
+      "content": {
+       "type": "text",
+       "text": "thinking..."
+      }
+     }
+    }
+   },
+   "expected": [],
+   "deltas_expected": [
+    {
+     "type": "x.acp.agent.message.chunk",
+     "data": {
+      "delta": "thinking..."
+     }
+    }
+   ],
+   "$comment": "suppressed at the default posture; the deltas_expected fork pins the AEP_ACP_DELTAS + capture=redacted opt-in"
+  },
+  "update_thought_chunk": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "agent_thought_chunk",
+      "content": {
+       "type": "text",
+       "text": "hmm"
+      }
+     }
+    }
+   },
+   "expected": [],
+   "deltas_expected": [
+    {
+     "type": "x.acp.agent.thought.chunk",
+     "data": {
+      "delta": "hmm"
+     }
+    }
+   ],
+   "$comment": "same suppression and fork as the message chunk"
+  },
+  "update_usage": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "usage_update",
+      "usedTokens": 1200,
+      "outputTokens": 80
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "x.acp.usage.updated",
+     "data": {
+      "gen_ai.usage.input_tokens": 1200,
+      "gen_ai.usage.output_tokens": 80
+     }
+    }
+   ],
+   "$comment": "token counts as metadata on the vendor plane"
+  },
+  "update_machinery": {
+   "input": {
+    "kind": "notification",
+    "method": "session/update",
+    "params": {
+     "sessionId": "sess_1",
+     "update": {
+      "sessionUpdate": "current_mode_update",
+      "currentModeId": "architect"
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "x.acp.current.mode.update",
+     "data": {}
+    }
+   ]
+  }
+ },
+ "fallback": {
+  "input": {
+   "kind": "notification",
+   "method": "some/future_notification",
+   "params": {}
+  },
+  "expected": [
+   {
+    "type": "x.acp.some.future.notification",
+    "data": {}
+   }
+  ]
+ }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/attention.timeout.schema.json",
+  "title": "AEP payload: attention.timeout",
+  "type": "object",
+  "properties": {
+    "after_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

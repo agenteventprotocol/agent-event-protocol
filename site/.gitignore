@@ -1,0 +1,4 @@
+dist/
+node_modules/
+# local build config; .env.example is the tracked template
+.env

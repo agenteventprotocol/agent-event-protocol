@@ -1,0 +1,350 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the Qwen Code table (16 hooks -> core types + the vendor-extension fallback; verified against the vendor hook documentation at mapping time). Each entry pins the pure hook->event mapping at the adapter default posture (capture metadata; attention.* redacted). Envelope identity (session_id -> session; runs SYNTHESIZED per UserPromptSubmit \u2014 no turn id is documented; tool pairing via tool_use_id) and the PermissionRequest hold-open control loop are runtime state, pinned by the reference adapter smoke.",
+ "identity": {
+  "session_from": "session_id",
+  "run_from": null,
+  "$comment": "no turn id documented; the adapter synthesizes one run per UserPromptSubmit/Stop pair. tool_use_id pairs tool events exactly."
+ },
+ "hooks": {
+  "SessionStart": {
+   "input": {
+    "hook_event_name": "SessionStart",
+    "session_id": "s_fix_1",
+    "source": "startup",
+    "model": "qwen4-coder",
+    "permission_mode": "default"
+   },
+   "expected": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "qwen-code"
+     },
+     "trigger": "startup",
+     "gen_ai.request.model": "qwen4-coder",
+     "permission_mode": "default"
+    },
+    "$comment": "permission_mode is a fleet-relevant security posture (yolo!) and rides at metadata"
+   }
+  },
+  "SessionEnd": {
+   "input": {
+    "hook_event_name": "SessionEnd",
+    "session_id": "s_fix_1",
+    "reason": "prompt_input_exit"
+   },
+   "expected": {
+    "type": "session.ended",
+    "data": {
+     "reason": "normal"
+    },
+    "$comment": "vendor reasons collapse to the schema enum \u2014 the sibling convention"
+   }
+  },
+  "UserPromptSubmit": {
+   "input": {
+    "hook_event_name": "UserPromptSubmit",
+    "session_id": "s_fix_1",
+    "prompt": "refactor the auth module"
+   },
+   "expected": {
+    "type": "run.started",
+    "data": {
+     "trigger": "user"
+    },
+    "$comment": "prompt gated redacted; run id synthesized by the adapter"
+   }
+  },
+  "Stop": {
+   "input": {
+    "hook_event_name": "Stop",
+    "session_id": "s_fix_1",
+    "stop_hook_active": false,
+    "input_tokens": 1200
+   },
+   "expected": {
+    "type": "run.finished",
+    "data": {
+     "gen_ai.usage.input_tokens": 1200
+    }
+   }
+  },
+  "StopFailure": {
+   "input": {
+    "hook_event_name": "StopFailure",
+    "session_id": "s_fix_1",
+    "error": "rate_limit",
+    "error_details": "retry after 60s"
+   },
+   "expected": {
+    "type": "run.failed",
+    "data": {
+     "reason": "rate_limit"
+    },
+    "$comment": "the same vendor error taxonomy the Claude Code adapter maps; details gated redacted"
+   }
+  },
+  "PreToolUse": {
+   "input": {
+    "hook_event_name": "PreToolUse",
+    "session_id": "s_fix_1",
+    "tool_name": "WriteFile",
+    "tool_input": {
+     "file_path": "/home/user/proj/src/app.ts",
+     "content": "x = 1"
+    },
+    "tool_use_id": "toolu_01"
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "tool": {
+      "name": "WriteFile",
+      "call_id": "toolu_01"
+     },
+     "args_digest": "abe436a7f5d23b60577a9ba20028e2e4"
+    },
+    "subject": "WriteFile"
+   }
+  },
+  "PostToolUse": {
+   "input": {
+    "hook_event_name": "PostToolUse",
+    "session_id": "s_fix_1",
+    "tool_name": "WriteFile",
+    "tool_input": {
+     "file_path": "/home/user/proj/src/app.ts",
+     "content": "x = 1"
+    },
+    "tool_response": {
+     "output": "ok",
+     "exit_code": 0
+    },
+    "tool_use_id": "toolu_01"
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "WriteFile",
+      "call_id": "toolu_01"
+     },
+     "result_digest": "23929b1994470046a642a1880627c4e3"
+    },
+    "subject": "WriteFile"
+   }
+  },
+  "PostToolUseFailure": {
+   "input": {
+    "hook_event_name": "PostToolUseFailure",
+    "session_id": "s_fix_1",
+    "tool_name": "ReadFile",
+    "tool_input": {
+     "file_path": "/nope"
+    },
+    "tool_use_id": "toolu_02",
+    "error": "no such file",
+    "is_interrupt": false
+   },
+   "expected": {
+    "type": "tool.failed",
+    "data": {
+     "tool": {
+      "name": "ReadFile",
+      "call_id": "toolu_02"
+     },
+     "error": {
+      "type": "tool_error"
+     }
+    },
+    "subject": "ReadFile",
+    "$comment": "error text gated redacted; is_interrupt=true synthesizes type interrupt"
+   }
+  },
+  "PermissionRequest": {
+   "input": {
+    "hook_event_name": "PermissionRequest",
+    "session_id": "s_fix_1",
+    "tool_name": "Bash",
+    "tool_input": {
+     "command": "rm -rf build"
+    },
+    "permission_mode": "default"
+   },
+   "expected": {
+    "type": "attention.requested",
+    "data": {
+     "kind": "permission",
+     "prompt": "Permission requested: Bash \u2014 rm -rf build",
+     "options": [
+      {
+       "id": "allow",
+       "label": "Allow"
+      },
+      {
+       "id": "deny",
+       "label": "Deny"
+      }
+     ],
+     "respond_via": [
+      "control"
+     ]
+    },
+    "subject": "Bash",
+    "$comment": "at the default attention ceiling (redacted) the full prompt rides through the redaction pipeline; a metadata-only ceiling synthesizes \"qwen-code requests permission: <tool>\" (AEP-0003 \u00a79.2) \u2014 the CC/Codex pattern. The hold-open control loop is daemon runtime, smoke-pinned"
+   }
+  },
+  "SubagentStart": {
+   "input": {
+    "hook_event_name": "SubagentStart",
+    "session_id": "s_fix_1",
+    "agent_id": "agent_7",
+    "agent_type": "Explorer",
+    "permission_mode": "default"
+   },
+   "expected": {
+    "type": "delegation.subagent.started",
+    "data": {
+     "agent_type": "Explorer"
+    },
+    "subject": "agent_7"
+   }
+  },
+  "SubagentStop": {
+   "input": {
+    "hook_event_name": "SubagentStop",
+    "session_id": "s_fix_1",
+    "agent_id": "agent_7",
+    "agent_type": "Explorer",
+    "stop_hook_active": false,
+    "permission_mode": "default"
+   },
+   "expected": {
+    "type": "delegation.subagent.stopped",
+    "data": {
+     "agent_type": "Explorer"
+    },
+    "subject": "agent_7"
+   }
+  },
+  "PreCompact": {
+   "input": {
+    "hook_event_name": "PreCompact",
+    "session_id": "s_fix_1",
+    "trigger": "auto",
+    "custom_instructions": ""
+   },
+   "expected": null,
+   "$comment": "paired concept, emitted once at the post moment (the Claude Code rule); the vendor's sixteen-hook set includes PostCompact (fetched 2026-07-11)"
+  },
+  "Notification_permission": {
+   "input": {
+    "hook_event_name": "Notification",
+    "session_id": "s_fix_1",
+    "notification_type": "permission_prompt",
+    "message": "Bash wants to run rm"
+   },
+   "expected": null,
+   "$comment": "suppressed: the first-class PermissionRequest hook already carries this moment \u2014 the Claude Code dedupe convention"
+  },
+  "Notification_other": {
+   "input": {
+    "hook_event_name": "Notification",
+    "session_id": "s_fix_1",
+    "notification_type": "idle_prompt",
+    "message": "agent idle"
+   },
+   "expected": {
+    "type": "progress.status",
+    "data": {},
+    "subject": "idle_prompt",
+    "$comment": "message gated redacted"
+   }
+  },
+  "TodoCreated": {
+   "input": {
+    "hook_event_name": "TodoCreated",
+    "session_id": "s_fix_1",
+    "todo_id": "todo_1",
+    "todo_content": "write the tests",
+    "todo_status": "pending",
+    "all_todos": [],
+    "phase": "postWrite"
+   },
+   "expected": {
+    "type": "progress.task.planned",
+    "data": {},
+    "subject": "todo_1",
+    "$comment": "content gated redacted; the all_todos array is deliberately not forwarded (payload minimalism)"
+   }
+  },
+  "TodoCompleted": {
+   "input": {
+    "hook_event_name": "TodoCompleted",
+    "session_id": "s_fix_1",
+    "todo_id": "todo_1",
+    "todo_content": "write the tests",
+    "previous_status": "in_progress",
+    "all_todos": [],
+    "phase": "postWrite"
+   },
+   "expected": {
+    "type": "progress.task.completed",
+    "data": {},
+    "subject": "todo_1"
+   }
+  },
+  "TodoCreated_validation": {
+   "input": {
+    "hook_event_name": "TodoCreated",
+    "session_id": "s_fix_1",
+    "todo_id": "todo_1",
+    "todo_content": "write the tests",
+    "todo_status": "pending",
+    "all_todos": [],
+    "phase": "validation"
+   },
+   "expected": null,
+   "$comment": "the vendor fires every todo hook TWICE per write — a validation phase (pre-persistence) then postWrite (persisted); the persisted fact is the event and the documented validation value is suppressed (the PreCompact rule: paired/two-phase concepts emit once). An absent or unknown phase emits — fail-open to emission."
+  },
+  "TodoCompleted_validation": {
+   "input": {
+    "hook_event_name": "TodoCompleted",
+    "session_id": "s_fix_1",
+    "todo_id": "todo_1",
+    "todo_content": "write the tests",
+    "previous_status": "in_progress",
+    "all_todos": [],
+    "phase": "validation"
+   },
+   "expected": null,
+   "$comment": "same rule as TodoCreated_validation: the validation firing is the silent pre-moment"
+  },
+  "PostCompact": {
+   "input": {
+    "hook_event_name": "PostCompact",
+    "session_id": "s_fix_1",
+    "trigger": "auto",
+    "compact_summary": "squeezed the transcript"
+   },
+   "expected": {
+    "type": "session.compacted",
+    "data": {
+     "trigger": "auto"
+    }
+   },
+   "$comment": "compact_summary is gated redacted and drops at the default metadata ceiling"
+  }
+ },
+ "fallback": {
+  "$comment": "Unknown future hooks land in the vendor extension namespace (AEP-0001 \u00a76 mechanical fallback), never on a core type.",
+  "input": {
+   "hook_event_name": "SomeFutureHook",
+   "session_id": "s_fix_1"
+  },
+  "expected": {
+   "type": "x.qwen-code.session.some_future_hook",
+   "data": {}
+  }
+ }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/control.cancel.schema.json",
+  "title": "AEP payload: control.cancel",
+  "type": "object",
+  "properties": {
+    "scope": {
+      "enum": [
+        "run",
+        "session"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "reason": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    }
+  },
+  "required": [
+    "scope"
+  ]
+}

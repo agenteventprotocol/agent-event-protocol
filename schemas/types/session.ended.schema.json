@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/session.ended.schema.json",
+  "title": "AEP payload: session.ended",
+  "type": "object",
+  "properties": {
+    "reason": {
+      "enum": [
+        "normal",
+        "error",
+        "timeout",
+        "killed",
+        "compaction"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "runs": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

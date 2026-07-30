@@ -1,0 +1,105 @@
+{
+  "3": {
+    "time_unix_nano": 1783073704221000000,
+    "event_name": "dev.aep.tool.completed",
+    "severity_text": "INFO",
+    "severity_number": 9,
+    "resource": {
+      "service.name": "claude-code"
+    },
+    "attributes": {
+      "aep.agent_id": "claude-code",
+      "aep.event_id": "01JX9YB3P4T90000000000GOLD",
+      "aep.capture": "metadata",
+      "aep.source": "aep://host-a/agent/claude-code/session/s_8f2c",
+      "aep.session_id": "s_8f2c",
+      "aep.run_id": "r_0042",
+      "aep.step": "turn-3",
+      "aep.sequence": 3,
+      "aep.epoch": 0,
+      "aep.causation_id": "01JX9YB2Z1QK0000000000GOLD",
+      "aep.subject": "Bash",
+      "gen_ai.usage.input_tokens": 142,
+      "gen_ai.usage.output_tokens": 87
+    },
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span_id": "00f067aa0ba902b7",
+    "flags": 1,
+    "body": {
+      "tool": {
+        "name": "Bash",
+        "call_id": "t_91"
+      },
+      "status": "success",
+      "duration_ms": 1240
+    }
+  },
+  "13": {
+    "time_unix_nano": 1783073712500000000,
+    "event_name": "dev.aep.tool.denied",
+    "severity_text": "WARN",
+    "severity_number": 13,
+    "resource": {
+      "service.name": "claude-code"
+    },
+    "attributes": {
+      "aep.agent_id": "claude-code",
+      "aep.event_id": "01JX9YBJDNY00000000000GOLD",
+      "aep.capture": "metadata",
+      "aep.source": "aep://host-a/agent/claude-code/session/s_8f2c",
+      "aep.session_id": "s_8f2c",
+      "aep.run_id": "r_0043",
+      "aep.sequence": 11,
+      "aep.epoch": 0,
+      "aep.subject": "Bash"
+    },
+    "body": {
+      "tool": {
+        "name": "Bash",
+        "call_id": "t_92"
+      },
+      "by": "policy",
+      "rule": "deny Bash(rm:*)"
+    }
+  },
+  "15": {
+    "time_unix_nano": 1783073713310000000,
+    "event_name": "dev.aep.tool.failed",
+    "severity_text": "ERROR",
+    "severity_number": 17,
+    "resource": {
+      "service.name": "claude-code"
+    },
+    "attributes": {
+      "aep.agent_id": "claude-code",
+      "aep.event_id": "01JX9YBMTFL00000000000GOLD",
+      "aep.capture": "redacted",
+      "aep.source": "aep://host-a/agent/claude-code/session/s_8f2c",
+      "aep.session_id": "s_8f2c",
+      "aep.run_id": "r_0043",
+      "aep.step": "turn-1",
+      "aep.sequence": 13,
+      "aep.epoch": 0,
+      "aep.causation_id": "01JX9YBKTRQ00000000000GOLD",
+      "aep.subject": "Write"
+    }
+  },
+  "24": {
+    "time_unix_nano": 1783073760000000000,
+    "event_name": "dev.aep.agent.presence",
+    "severity_text": "DEBUG",
+    "severity_number": 5,
+    "resource": {
+      "service.name": "claude-code"
+    },
+    "attributes": {
+      "aep.agent_id": "claude-code",
+      "aep.event_id": "01JX9YBCPRS0000000000GOLD1",
+      "aep.capture": "metadata",
+      "aep.source": "aep://host-a/agent/claude-code"
+    },
+    "body": {
+      "state": "online"
+    }
+  }
+}

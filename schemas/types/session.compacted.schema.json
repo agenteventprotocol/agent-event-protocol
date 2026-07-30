@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/session.compacted.schema.json",
+  "title": "AEP payload: session.compacted",
+  "type": "object",
+  "properties": {
+    "trigger": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "strategy": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "estimated_token_count": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "forgotten": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "gen_ai.usage.input_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "gen_ai.usage.output_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

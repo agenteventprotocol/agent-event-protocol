@@ -1,0 +1,19 @@
+{
+  "$comment": "AEP-0002 §3 — closed category set for 0.1. Changing this file requires a Standards-Track AEP.",
+  "categories": [
+    { "name": "agent",      "scope": "agent",   "summary": "emitter presence, health, liveness" },
+    { "name": "session",    "scope": "session", "summary": "conversation/work-unit lifecycle" },
+    { "name": "run",        "scope": "session", "summary": "activation lifecycle and steps" },
+    { "name": "progress",   "scope": "session", "summary": "intermediate status, plans, artifacts" },
+    { "name": "tool",       "scope": "session", "summary": "tool/capability invocation lifecycle" },
+    { "name": "delegation", "scope": "session", "summary": "subagent/delegate lifecycle" },
+    { "name": "attention",  "scope": "session", "summary": "human-needed moments" },
+    { "name": "resource",   "scope": "session", "summary": "external resources an agent touches" },
+    { "name": "error",      "scope": "session", "summary": "faults outside tool/run terminals" },
+    { "name": "state",      "scope": "session", "summary": "agent-owned state snapshots/deltas" },
+    { "name": "assessment", "scope": "session", "summary": "evaluation results and human feedback about work (experimental)" },
+    { "name": "message",    "scope": "session", "summary": "conversational content (optional sub-profile)" },
+    { "name": "control",    "scope": "session", "summary": "inbound commands and their acks" },
+    { "name": "x",          "scope": "any",     "summary": "vendor extension namespace x.{vendor}.{category}.{rest}" }
+  ]
+}

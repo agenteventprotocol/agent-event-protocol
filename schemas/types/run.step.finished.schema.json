@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/run.step.finished.schema.json",
+  "title": "AEP payload: run.step.finished",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    }
+  }
+}

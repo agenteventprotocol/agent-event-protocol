@@ -1,0 +1,711 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the OpenHands agent-server table, verified against OpenHands/software-agent-sdk @ cf6c2a3a (release v1.35.0; PyPI openhands-agent-server 1.35.0). Inputs are TRANSPORT-shaped (event_transport_dump: exclude_none, parent_id STRIPPED, legacy-filtered tools) \u2014 never raw SDK dumps; drift at a future pin is a re-verify, not a surprise. Each entry pins mapEvent at the bridge default posture (capture metadata, deltas OFF); entries whose behavior forks under the AEP_OPENHANDS_DELTAS opt-in carry deltas_expected (TokenEvent pins its refusal: nothing even under the opt-in - raw token-id planes are not observability). expected is {type, data, subject, step}. status_transitions pins the pure statusMoments table behind run synthesis and the attention moments (the server's own ConversationExecutionStatus enum; paused/waiting never close; running->idle closes honestly with reason=idle; attention.requested carries NO options and NO respond path - the read-only channel). Two registry-forced rules recorded in the design record banner: vendor types carry two segments after the token (x.openhands.<family>.<leaf>, mechanical from the kind), and a USER rejection is a human decision, not a policy block - rejection_source=hook maps to tool.denied by=policy while rejection_source=user stays vendor-scoped (x.openhands.user_reject.observation) with the attention.resolved event carrying the human moment. The naive server-local vendor timestamp and the vendor event id (the dedupe key) ride at metadata (vendor_ts / vendor_event_id); the envelope ts is bridge receive time. Runtime wiring (conversation_id scoping, socket replay + dedupe, the never-send auth-frame-only posture) is receiver state, smoke-pinned in the reference repository.",
+ "identity": {
+  "session_from": "conversation_id (the WebSocket path / REST discovery id; the socket scopes its events)",
+  "run_from": "synthesized from ConversationStateUpdateEvent execution_status transitions (statusMoments)",
+  "$comment": "The envelope step is stamped from llm_response_id on action/message events \u2014 a grouping fact, not a synthesized boundary. Vendor event id + naive server-local timestamp ride at metadata (vendor_event_id / vendor_ts); the envelope ts is bridge receive time."
+ },
+ "events": {
+  "action_event": {
+   "input": {
+    "kind": "ActionEvent",
+    "id": "ev_act_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent",
+    "thought": [
+     {
+      "type": "text",
+      "text": "The listing is needed first."
+     }
+    ],
+    "action": {
+     "kind": "ExecuteBashAction",
+     "command": "ls -la",
+     "is_input": false
+    },
+    "tool_name": "execute_bash",
+    "tool_call_id": "call_fix_1",
+    "tool_call": {
+     "id": "call_fix_1",
+     "type": "function",
+     "function": {
+      "name": "execute_bash",
+      "arguments": "{\"command\":\"ls -la\"}"
+     }
+    },
+    "llm_response_id": "resp_fix_1",
+    "security_risk": "LOW"
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_act_1",
+     "tool": {
+      "name": "execute_bash",
+      "call_id": "call_fix_1"
+     },
+     "risk": "LOW",
+     "args_digest": "70e036c50202ba673adbe1c505e33e3f"
+    },
+    "subject": "execute_bash",
+    "step": "resp_fix_1"
+   }
+  },
+  "action_event_unknown_risk": {
+   "input": {
+    "kind": "ActionEvent",
+    "id": "ev_act_2",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent",
+    "thought": [],
+    "action": {
+     "kind": "FileReadAction",
+     "path": "/tmp/notes.txt"
+    },
+    "tool_name": "file_read",
+    "tool_call_id": "call_fix_2",
+    "tool_call": {
+     "id": "call_fix_2",
+     "type": "function",
+     "function": {
+      "name": "file_read",
+      "arguments": "{\"path\":\"/tmp/notes.txt\"}"
+     }
+    },
+    "llm_response_id": "resp_fix_2",
+    "security_risk": "UNKNOWN"
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_act_2",
+     "tool": {
+      "name": "file_read",
+      "call_id": "call_fix_2"
+     },
+     "args_digest": "0bece8969b322e1c78a6908366f58d88"
+    },
+    "subject": "file_read",
+    "step": "resp_fix_2"
+   }
+  },
+  "observation_ok": {
+   "input": {
+    "kind": "ObservationEvent",
+    "id": "ev_obs_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment",
+    "tool_name": "execute_bash",
+    "tool_call_id": "call_fix_1",
+    "action_id": "ev_act_1",
+    "observation": {
+     "kind": "ExecuteBashObservation",
+     "content": [
+      {
+       "type": "text",
+       "text": "total 4\nREADME.md"
+      }
+     ],
+     "is_error": false
+    }
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_obs_1",
+     "tool": {
+      "name": "execute_bash",
+      "call_id": "call_fix_1"
+     },
+     "result_digest": "ad5c679d78b027a0fe8f7592a602326e"
+    },
+    "subject": "execute_bash"
+   }
+  },
+  "observation_error": {
+   "input": {
+    "kind": "ObservationEvent",
+    "id": "ev_obs_2",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment",
+    "tool_name": "file_read",
+    "tool_call_id": "call_fix_2",
+    "action_id": "ev_act_2",
+    "observation": {
+     "kind": "FileReadObservation",
+     "content": [
+      {
+       "type": "text",
+       "text": "[An error occurred during execution.]\nno such file"
+      }
+     ],
+     "is_error": true
+    }
+   },
+   "expected": {
+    "type": "tool.failed",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_obs_2",
+     "tool": {
+      "name": "file_read",
+      "call_id": "call_fix_2"
+     },
+     "error": {
+      "type": "tool_error"
+     }
+    },
+    "subject": "file_read"
+   }
+  },
+  "user_reject_user": {
+   "input": {
+    "kind": "UserRejectObservation",
+    "id": "ev_rej_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "user",
+    "tool_name": "execute_bash",
+    "tool_call_id": "call_fix_3",
+    "action_id": "ev_act_3",
+    "rejection_reason": "Do not run installers here.",
+    "rejection_source": "user"
+   },
+   "expected": {
+    "type": "x.openhands.user_reject.observation",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_rej_1",
+     "tool": {
+      "name": "execute_bash",
+      "call_id": "call_fix_3"
+     }
+    },
+    "subject": "execute_bash"
+   }
+  },
+  "user_reject_hook": {
+   "input": {
+    "kind": "UserRejectObservation",
+    "id": "ev_rej_2",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "hook",
+    "tool_name": "execute_bash",
+    "tool_call_id": "call_fix_4",
+    "action_id": "ev_act_4",
+    "rejection_reason": "Blocked by pre-commit hook policy.",
+    "rejection_source": "hook"
+   },
+   "expected": {
+    "type": "tool.denied",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_rej_2",
+     "tool": {
+      "name": "execute_bash",
+      "call_id": "call_fix_4"
+     },
+     "by": "policy"
+    },
+    "subject": "execute_bash"
+   }
+  },
+  "agent_error": {
+   "input": {
+    "kind": "AgentErrorEvent",
+    "id": "ev_err_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent",
+    "tool_name": "browser_navigate",
+    "tool_call_id": "call_fix_5",
+    "error": "Tool executor crashed before producing an observation."
+   },
+   "expected": {
+    "type": "tool.failed",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_err_1",
+     "tool": {
+      "name": "browser_navigate",
+      "call_id": "call_fix_5"
+     },
+     "error": {
+      "type": "agent_error"
+     }
+    },
+    "subject": "browser_navigate"
+   }
+  },
+  "message_user": {
+   "input": {
+    "kind": "MessageEvent",
+    "id": "ev_msg_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "user",
+    "llm_message": {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "Please fix the failing test."
+      }
+     ]
+    }
+   },
+   "expected": {
+    "type": "x.openhands.message.event",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_msg_1",
+     "role": "user"
+    }
+   }
+  },
+  "message_agent": {
+   "input": {
+    "kind": "MessageEvent",
+    "id": "ev_msg_2",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent",
+    "llm_message": {
+     "role": "assistant",
+     "content": [
+      {
+       "type": "text",
+       "text": "The test passes now."
+      }
+     ]
+    },
+    "llm_response_id": "resp_fix_9",
+    "activated_skills": [
+     "git",
+     "pytest"
+    ]
+   },
+   "expected": {
+    "type": "x.openhands.message.event",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_msg_2",
+     "role": "assistant",
+     "skills": 2
+    },
+    "step": "resp_fix_9"
+   }
+  },
+  "condensation": {
+   "input": {
+    "kind": "Condensation",
+    "id": "ev_cond_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment",
+    "forgotten_event_ids": [
+     "ev_a",
+     "ev_b",
+     "ev_c"
+    ],
+    "summary": "Earlier exploration summarized.",
+    "summary_offset": 2,
+    "llm_response_id": "resp_fix_c"
+   },
+   "expected": {
+    "type": "session.compacted",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_cond_1",
+     "forgotten": 3
+    }
+   }
+  },
+  "condensation_request": {
+   "input": {
+    "kind": "CondensationRequest",
+    "id": "ev_cond_2",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment"
+   },
+   "expected": {
+    "type": "x.openhands.condensation.request",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_cond_2"
+    }
+   }
+  },
+  "condensation_summary": {
+   "input": {
+    "kind": "CondensationSummaryEvent",
+    "id": "ev_cond_3",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment",
+    "summary": "window summary"
+   },
+   "expected": {
+    "type": "x.openhands.condensation.summary",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_cond_3"
+    }
+   }
+  },
+  "state_full": {
+   "input": {
+    "kind": "ConversationStateUpdateEvent",
+    "id": "ev_st_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment",
+    "key": "full_state",
+    "value": {
+     "execution_status": "running",
+     "max_iterations": 500
+    }
+   },
+   "expected": {
+    "type": "state.snapshot",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_st_1"
+    }
+   }
+  },
+  "state_key": {
+   "input": {
+    "kind": "ConversationStateUpdateEvent",
+    "id": "ev_st_2",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment",
+    "key": "execution_status",
+    "value": "waiting_for_confirmation"
+   },
+   "expected": {
+    "type": "state.delta",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_st_2",
+     "key": "execution_status"
+    }
+   }
+  },
+  "conversation_error": {
+   "input": {
+    "kind": "ConversationErrorEvent",
+    "id": "ev_cerr_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "environment",
+    "code": "LLMAuthenticationError",
+    "detail": "Provider rejected the API key."
+   },
+   "expected": {
+    "type": "error.raised",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_cerr_1",
+     "code": "LLMAuthenticationError"
+    }
+   }
+  },
+  "pause": {
+   "input": {
+    "kind": "PauseEvent",
+    "id": "ev_pause_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "user"
+   },
+   "expected": {
+    "type": "x.openhands.pause.event",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_pause_1"
+    }
+   }
+  },
+  "interrupt": {
+   "input": {
+    "kind": "InterruptEvent",
+    "id": "ev_int_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "user"
+   },
+   "expected": {
+    "type": "x.openhands.interrupt.event",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_int_1"
+    }
+   }
+  },
+  "system_prompt": {
+   "input": {
+    "kind": "SystemPromptEvent",
+    "id": "ev_sys_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent",
+    "system_prompt": {
+     "type": "text",
+     "text": "You are a software agent."
+    },
+    "tools": []
+   },
+   "expected": {
+    "type": "x.openhands.system.prompt",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_sys_1"
+    }
+   }
+  },
+  "streaming_delta": {
+   "input": {
+    "kind": "StreamingDeltaEvent",
+    "id": "ev_sd_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent",
+    "content": "partial tok"
+   },
+   "expected": null,
+   "deltas_expected": {
+    "type": "x.openhands.streaming.delta",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_sd_1"
+    }
+   }
+  },
+  "token_event": {
+   "input": {
+    "kind": "TokenEvent",
+    "id": "ev_tok_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent",
+    "prompt_token_ids": [
+     1,
+     2,
+     3
+    ],
+    "response_token_ids": [
+     4,
+     5
+    ]
+   },
+   "expected": null,
+   "deltas_expected": null
+  },
+  "acp_tool_call": {
+   "input": {
+    "kind": "ACPToolCallEvent",
+    "id": "ev_acp_1",
+    "timestamp": "2026-07-12T10:15:00.123456",
+    "source": "agent"
+   },
+   "expected": {
+    "type": "x.openhands.acp_tool.call",
+    "data": {
+     "vendor_ts": "2026-07-12T10:15:00.123456",
+     "vendor_event_id": "ev_acp_1"
+    }
+   }
+  }
+ },
+ "fallback": {
+  "input": {
+   "kind": "SandboxCheckpointEvent",
+   "id": "ev_new_1",
+   "timestamp": "2026-07-12T10:15:00.123456",
+   "source": "environment",
+   "anything": true
+  },
+  "expected": {
+   "type": "x.openhands.sandbox.checkpoint",
+   "data": {
+    "vendor_ts": "2026-07-12T10:15:00.123456",
+    "vendor_event_id": "ev_new_1"
+   }
+  }
+ },
+ "status_transitions": {
+  "first_running": {
+   "prev": null,
+   "next": "running",
+   "expected": [
+    {
+     "type": "run.started",
+     "data": {}
+    }
+   ]
+  },
+  "running_finished": {
+   "prev": "running",
+   "next": "finished",
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {}
+    }
+   ]
+  },
+  "running_error": {
+   "prev": "running",
+   "next": "error",
+   "expected": [
+    {
+     "type": "run.failed",
+     "data": {
+      "reason": "error"
+     }
+    }
+   ]
+  },
+  "running_stuck": {
+   "prev": "running",
+   "next": "stuck",
+   "expected": [
+    {
+     "type": "run.failed",
+     "data": {
+      "reason": "stuck"
+     }
+    }
+   ]
+  },
+  "running_idle": {
+   "prev": "running",
+   "next": "idle",
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {
+      "reason": "idle"
+     }
+    }
+   ]
+  },
+  "running_waiting": {
+   "prev": "running",
+   "next": "waiting_for_confirmation",
+   "expected": [
+    {
+     "type": "attention.requested",
+     "data": {
+      "kind": "permission",
+      "prompt": "Awaiting confirmation for a pending action"
+     }
+    }
+   ]
+  },
+  "waiting_running": {
+   "prev": "waiting_for_confirmation",
+   "next": "running",
+   "expected": [
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "answered"
+     }
+    }
+   ]
+  },
+  "waiting_idle": {
+   "prev": "waiting_for_confirmation",
+   "next": "idle",
+   "expected": [
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "answered"
+     }
+    }
+   ]
+  },
+  "waiting_paused": {
+   "prev": "waiting_for_confirmation",
+   "next": "paused",
+   "expected": [
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "dismissed"
+     }
+    }
+   ]
+  },
+  "waiting_deleting": {
+   "prev": "waiting_for_confirmation",
+   "next": "deleting",
+   "expected": [
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "dismissed"
+     }
+    },
+    {
+     "type": "run.cancelled",
+     "data": {
+      "reason": "deleting"
+     }
+    },
+    {
+     "type": "session.ended",
+     "data": {
+      "reason": "killed"
+     }
+    }
+   ]
+  },
+  "running_deleting": {
+   "prev": "running",
+   "next": "deleting",
+   "expected": [
+    {
+     "type": "run.cancelled",
+     "data": {
+      "reason": "deleting"
+     }
+    },
+    {
+     "type": "session.ended",
+     "data": {
+      "reason": "killed"
+     }
+    }
+   ]
+  },
+  "paused_running": {
+   "prev": "paused",
+   "next": "running",
+   "expected": []
+  },
+  "finished_running": {
+   "prev": "finished",
+   "next": "running",
+   "expected": [
+    {
+     "type": "run.started",
+     "data": {}
+    }
+   ]
+  },
+  "idle_running": {
+   "prev": "idle",
+   "next": "running",
+   "expected": [
+    {
+     "type": "run.started",
+     "data": {}
+    }
+   ]
+  },
+  "same_state": {
+   "prev": "running",
+   "next": "running",
+   "expected": []
+  },
+  "running_paused": {
+   "prev": "running",
+   "next": "paused",
+   "expected": []
+  }
+ }
+}

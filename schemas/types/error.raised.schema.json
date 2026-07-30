@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/error.raised.schema.json",
+  "title": "AEP payload: error.raised",
+  "type": "object",
+  "properties": {
+    "error": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "message": {
+          "type": "string",
+          "x-aep-capture": "redacted"
+        }
+      },
+      "x-aep-capture": "metadata"
+    },
+    "code": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "fatal": {
+      "type": "boolean",
+      "x-aep-capture": "metadata"
+    }
+  }
+}

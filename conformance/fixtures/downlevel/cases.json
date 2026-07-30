@@ -1,0 +1,203 @@
+{
+  "$comment": "AEP-0001 §8.2 down-leveling at a fan-out hop: the rewritten event MUST honor its new capture level (§8.2a — `metadata` means no free text). Cases pin downlevel(): nested annotated fields (answer.text, error.message) are pruned via dotted-path annotations, and the AEP-0002 §5.3 [metadata*] exception fields (prompt / options[].label / field_spec labels / answer.values free text) degrade structurally below `redacted` — a hop has no source context to synthesize or classify, and dropping more than required is always legal (§8.2b). Found by review: before this corpus, a redacted attention.answered down-leveled to a metadata consumer kept answer.text verbatim. Second review finding, §8.2(e): `redacted` is a provenance claim (the free text passed the AEP-0003 §9.4 pipeline) that a mechanical hop can never mint — a `redacted` ceiling on a `full` event rewrites to `metadata` (DL6/DL10/DL11), because redacted-gated fields at capture:full may be verbatim (AEP-0002 §5.1 r2) and would otherwise ride relabeled as redacted; a redacted-SOURCE event passes a redacted ceiling unchanged (DL12 — the claim was minted at source). Consumed by BOTH runners: run.js exercises the shared JS implementation the relay uses; run.py holds its own independent implementation written from the spec text.",
+  "cases": [
+    {
+      "name": "attention.answered redacted->metadata: nested answer.text dropped, values keep structural entries only",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL1", "type": "attention.answered", "subject": "R1", "time": "2026-07-03T10:00:00Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 0, "capture": "redacted",
+        "data": { "answer": { "option": "2", "text": "SECRET free text", "values": { "name": "billing-api", "staged": true, "replicas": 3, "regions": ["1", "3"], "db": "MariaDB" } }, "via": "control" }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "answer": { "option": "2", "values": { "staged": true, "replicas": 3 } }, "via": "control" }
+    },
+    {
+      "name": "control.attention.respond redacted->metadata: same rule on the command copy observers see",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL2", "type": "control.attention.respond", "subject": "R1", "time": "2026-07-03T10:00:01Z",
+        "source": "aep://h/agent/mc", "agent": "mc", "session": "s1", "capture": "redacted",
+        "data": { "answer": { "text": "SECRET guidance", "values": { "db": "MariaDB", "staged": false } } }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "answer": { "values": { "staged": false } } }
+    },
+    {
+      "name": "attention.requested kind=form redacted->metadata: prompt synthesized, labels degrade to ids, structure survives",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL3", "type": "attention.requested", "subject": "AskUserQuestion", "time": "2026-07-03T10:00:02Z",
+        "source": "aep://h/agent/claude-code", "agent": "claude-code", "session": "s1", "seq": 1, "capture": "redacted",
+        "data": { "kind": "form", "prompt": "Database: Which database should the new service use?", "fields": [{ "id": "1", "type": "select", "label": "Database: Which database should the new service use?", "required": true, "other": true, "choices": [{ "id": "1", "label": "PostgreSQL" }, { "id": "2", "label": "SQLite" }] }], "respond_via": ["control"] }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "kind": "form", "prompt": "claude-code requests form: AskUserQuestion", "fields": [{ "id": "1", "type": "select", "label": "1", "required": true, "other": true, "choices": [{ "id": "1", "label": "1" }, { "id": "2", "label": "2" }] }], "respond_via": ["control"] }
+    },
+    {
+      "name": "attention.requested kind=permission redacted->metadata: option labels degrade to ids",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL4", "type": "attention.requested", "subject": "Bash", "time": "2026-07-03T10:00:03Z",
+        "source": "aep://h/agent/claude-code", "agent": "claude-code", "session": "s1", "seq": 2, "capture": "redacted",
+        "data": { "kind": "permission", "prompt": "Permission requested: Bash — rm -rf build/", "options": [{ "id": "allow", "label": "Allow" }, { "id": "deny", "label": "Deny" }], "respond_via": ["control"] }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "kind": "permission", "prompt": "claude-code requests permission: Bash", "options": [{ "id": "allow", "label": "allow" }, { "id": "deny", "label": "deny" }], "respond_via": ["control"] }
+    },
+    {
+      "name": "tool.failed redacted->metadata: nested error.message dropped, error.type kept",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL5", "type": "tool.failed", "subject": "Bash", "time": "2026-07-03T10:00:04Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 3, "capture": "redacted",
+        "data": { "tool": { "name": "Bash", "call_id": "t_1" }, "error": { "type": "ExecError", "message": "SECRET /home/user/path failed" } }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "tool": { "name": "Bash", "call_id": "t_1" }, "error": { "type": "ExecError" } }
+    },
+    {
+      "name": "tool.completed full at a redacted ceiling: mechanical hop lands on metadata (§8.2e), full-gated result dropped, digest kept",
+      "ceiling": "redacted",
+      "event": {
+        "aep": "0.1", "id": "DL6", "type": "tool.completed", "subject": "Bash", "time": "2026-07-03T10:00:05Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 4, "capture": "full",
+        "data": { "tool": { "name": "Bash" }, "status": "success", "result": "SECRET verbatim output", "result_digest": "a3f9c2d1e8b7a6f5a3f9c2d1e8b7a6f5" }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "tool": { "name": "Bash" }, "status": "success", "result_digest": "a3f9c2d1e8b7a6f5a3f9c2d1e8b7a6f5" }
+    },
+    {
+      "name": "ceiling not lower: event passes through untouched",
+      "ceiling": "redacted",
+      "event": {
+        "aep": "0.1", "id": "DL7", "type": "attention.answered", "subject": "R1", "time": "2026-07-03T10:00:06Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 5, "capture": "metadata",
+        "data": { "answer": { "option": "1" }, "via": "control" }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "answer": { "option": "1" }, "via": "control" }
+    },
+    {
+      "name": "type without annotations: data stripped wholesale (conservative direction), full input lands on metadata (§8.2e)",
+      "ceiling": "redacted",
+      "event": {
+        "aep": "0.1", "id": "DL8", "type": "x.acme.session.custom_blob", "time": "2026-07-03T10:00:07Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 6, "capture": "full",
+        "data": { "anything": "SECRET" }
+      },
+      "expect_capture": "metadata",
+      "expect_data": null
+    },
+    {
+      "name": "ceiling none: envelope only",
+      "ceiling": "none",
+      "event": {
+        "aep": "0.1", "id": "DL9", "type": "attention.answered", "subject": "R1", "time": "2026-07-03T10:00:08Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 7, "capture": "redacted",
+        "data": { "answer": { "values": { "staged": true } } }
+      },
+      "expect_capture": "none",
+      "expect_data": null
+    },
+    {
+      "name": "tool.completed full w/ verbatim result_redacted at a redacted ceiling: the provenance claim is never minted mechanically — metadata out, redacted-gated field dropped (§8.2e)",
+      "ceiling": "redacted",
+      "event": {
+        "aep": "0.1", "id": "DL10", "type": "tool.completed", "subject": "Bash", "time": "2026-07-03T10:00:09Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 8, "capture": "full",
+        "data": { "tool": { "name": "Bash", "call_id": "t_2" }, "status": "success", "result": "SECRET verbatim output", "result_redacted": "SECRET output that never passed the §9.4 pipeline", "result_digest": "b4e8d1c2a9f7b6e5b4e8d1c2a9f7b6e5" }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "tool": { "name": "Bash", "call_id": "t_2" }, "status": "success", "result_digest": "b4e8d1c2a9f7b6e5b4e8d1c2a9f7b6e5" }
+    },
+    {
+      "name": "session.started full w/ verbatim label+cwd at a redacted ceiling: metadata out, redacted-gated fields dropped, structural client kept (§8.2e)",
+      "ceiling": "redacted",
+      "event": {
+        "aep": "0.1", "id": "DL11", "type": "session.started", "time": "2026-07-03T10:00:10Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 9, "capture": "full",
+        "data": { "label": "SECRET task title quoting the prompt verbatim", "cwd": "/home/user/secret-project", "client": { "name": "cli", "version": "1.0.0" } }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "client": { "name": "cli", "version": "1.0.0" } }
+    },
+    {
+      "name": "tool.failed redacted source through a redacted ceiling: provenance minted at source rides unchanged (§8.2e)",
+      "ceiling": "redacted",
+      "event": {
+        "aep": "0.1", "id": "DL12", "type": "tool.failed", "subject": "Bash", "time": "2026-07-03T10:00:11Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 10, "capture": "redacted",
+        "data": { "tool": { "name": "Bash", "call_id": "t_3" }, "error": { "type": "ExecError", "message": "command failed in [REDACTED:secret] context" } }
+      },
+      "expect_capture": "redacted",
+      "expect_data": { "tool": { "name": "Bash", "call_id": "t_3" }, "error": { "type": "ExecError", "message": "command failed in [REDACTED:secret] context" } }
+    },
+    {
+      "name": "resource.retrieval.returned full->metadata: per-document content (full) and content_redacted drop via documents[].* annotations, id/score/metadata provenance survives",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL13", "type": "resource.retrieval.returned", "time": "2026-07-03T10:00:12Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 11, "capture": "full",
+        "data": { "documents": [{ "id": "doc-1", "score": 0.91, "content": "verbatim retrieved text with a secret", "content_redacted": "verbatim retrieved text with a [REDACTED]", "metadata": { "corpus": "kb", "rank": 1 } }, { "id": "doc-2", "score": 0.42, "metadata": { "rank": 2 } }], "count": 2, "corpus": "kb", "duration_ms": 120 }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "documents": [{ "id": "doc-1", "score": 0.91, "metadata": { "corpus": "kb", "rank": 1 } }, { "id": "doc-2", "score": 0.42, "metadata": { "rank": 2 } }], "count": 2, "corpus": "kb", "duration_ms": 120 }
+    },
+    {
+      "name": "assessment.evaluation.recorded full->metadata: explanation (redacted) drops, name/score.value/score.label/evaluator provenance survives",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL14", "type": "assessment.evaluation.recorded", "time": "2026-07-03T10:00:13Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 12, "capture": "full",
+        "data": { "gen_ai.evaluation.name": "faithfulness", "gen_ai.evaluation.score.value": 0.2, "gen_ai.evaluation.score.label": "fail", "gen_ai.evaluation.explanation": "the claim about the secret key is unsupported by the retrieved context", "evaluator": "llm-judge:v2" }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "gen_ai.evaluation.name": "faithfulness", "gen_ai.evaluation.score.value": 0.2, "gen_ai.evaluation.score.label": "fail", "evaluator": "llm-judge:v2" }
+    },
+    {
+      "name": "assessment.feedback.received full->metadata: comment+correction (redacted) drop, rating/label/source survive",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL15", "type": "assessment.feedback.received", "time": "2026-07-03T10:00:14Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 13, "capture": "full",
+        "data": { "rating": -1, "label": "thumbs_down", "comment": "the answer leaked my private key", "correction": "never echo the secret; summarize only", "source": "human" }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "rating": -1, "label": "thumbs_down", "source": "human" }
+    },
+    {
+      "name": "resource.retrieval.reranked full->metadata: per-document content (full) and content_redacted drop in both input_documents and output_documents via [].* annotations, id/score/metadata provenance and query_digest/model/top_k/count/duration_ms survive; the query (redacted) drops",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL16", "type": "resource.retrieval.reranked", "time": "2026-07-03T10:00:15Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 14, "capture": "full",
+        "data": { "query": "the secret rerank query", "query_digest": "sha256:ab12", "model": "cross-encoder:v2", "top_k": 2, "input_documents": [{ "id": "doc-2", "score": 0.42, "content": "candidate text with a secret", "content_redacted": "candidate text with a [REDACTED]", "metadata": { "rank": 2 } }, { "id": "doc-1", "score": 0.91, "metadata": { "rank": 1 } }], "output_documents": [{ "id": "doc-1", "score": 0.97, "content": "top text with a secret", "content_redacted": "top text with a [REDACTED]", "metadata": { "rank": 1 } }, { "id": "doc-2", "score": 0.61, "metadata": { "rank": 2 } }], "count": 2, "duration_ms": 80 }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "query_digest": "sha256:ab12", "model": "cross-encoder:v2", "top_k": 2, "input_documents": [{ "id": "doc-2", "score": 0.42, "metadata": { "rank": 2 } }, { "id": "doc-1", "score": 0.91, "metadata": { "rank": 1 } }], "output_documents": [{ "id": "doc-1", "score": 0.97, "metadata": { "rank": 1 } }, { "id": "doc-2", "score": 0.61, "metadata": { "rank": 2 } }], "count": 2, "duration_ms": 80 }
+    },
+    {
+      "name": "resource.citation.recorded full->metadata: per-citation cited_text (full) and cited_text_redacted drop, source.uri/title (redacted) drop, source.id + offset (char/block) + document_index survive, count survives",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL17", "type": "resource.citation.recorded", "time": "2026-07-03T10:00:16Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 15, "capture": "full",
+        "data": { "citations": [{ "source": { "id": "doc-1", "uri": "doc://spec/AEP-0003#6.4", "title": "Bindings and Lifecycle" }, "cited_text": "the relay holds a bounded replay buffer per session", "cited_text_redacted": "the relay holds a bounded replay buffer per session", "offset": { "char": { "start": 0, "end": 50 } }, "document_index": 0 }, { "source": { "id": "doc-2", "uri": "doc://spec/AEP-0001#8.2" }, "cited_text": "a slow consumer sheds a secret debug event first", "cited_text_redacted": "a slow consumer sheds a [REDACTED] debug event first", "offset": { "block": { "block": 3, "start": 10, "end": 40 } }, "document_index": 1 }], "count": 2 }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "citations": [{ "source": { "id": "doc-1" }, "offset": { "char": { "start": 0, "end": 50 } }, "document_index": 0 }, { "source": { "id": "doc-2" }, "offset": { "block": { "block": 3, "start": 10, "end": 40 } }, "document_index": 1 }], "count": 2 }
+    },
+    {
+      "name": "assessment.guardrail.recorded full->metadata: guardrail.explanation (redacted) drops, stage/verdict/categories/detector survive via guardrail.* annotations",
+      "ceiling": "metadata",
+      "event": {
+        "aep": "0.1", "id": "DL18", "type": "assessment.guardrail.recorded", "time": "2026-07-03T10:00:17Z",
+        "source": "aep://h/agent/a", "agent": "a", "session": "s1", "seq": 16, "capture": "full",
+        "data": { "guardrail": { "stage": "output", "verdict": "blocked", "categories": [{ "name": "self_harm", "score": 0.92 }, { "name": "violence", "score": 0.11 }], "detector": { "name": "guard-model:v3", "version": "3.1" }, "explanation": "the response described a secret method for self-harm" } }
+      },
+      "expect_capture": "metadata",
+      "expect_data": { "guardrail": { "stage": "output", "verdict": "blocked", "categories": [{ "name": "self_harm", "score": 0.92 }, { "name": "violence", "score": 0.11 }], "detector": { "name": "guard-model:v3", "version": "3.1" } } }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/control.accepted.schema.json",
+  "title": "AEP payload: control.accepted",
+  "type": "object",
+  "properties": {},
+  "$comment": "cause = command id (AEP-0004 \u00a73)"
+}

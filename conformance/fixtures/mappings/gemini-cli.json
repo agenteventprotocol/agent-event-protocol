@@ -1,0 +1,240 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the Gemini CLI table (11 hooks: 8 -> core types, 3 model-plane hooks -> the vendor extension namespace BY DESIGN, plus the mechanical fallback for unknown hooks). Each entry pins the pure hook->event mapping at the adapter default capture posture (capture metadata; attention.* redacted — unused: nothing here maps to attention.*, see Notification). input uses the vendor-documented field names; expected is {type, data, subject}. Envelope identity (session_id -> AEP session; runs are ADAPTER-SYNTHESIZED per BeforeAgent/AfterAgent pair — Gemini exposes no turn id) and causal wiring are runtime state, pinned by the reference adapter smoke, not here. run.js checks the reference adapter module against these pins; run.py checks schema validity and the wire facts.",
+ "identity": {
+  "session_from": "session_id",
+  "run_from": null,
+  "$comment": "Gemini exposes no turn id; the adapter synthesizes one AEP run per BeforeAgent/AfterAgent pair."
+ },
+ "hooks": {
+  "SessionStart": {
+   "input": {
+    "hook_event_name": "SessionStart",
+    "session_id": "s_fix_1",
+    "source": "startup",
+    "cwd": "/home/user/proj"
+   },
+   "expected": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "gemini-cli"
+     },
+     "trigger": "startup"
+    },
+    "$comment": "cwd is gated redacted and is dropped at the default metadata ceiling"
+   }
+  },
+  "SessionEnd": {
+   "input": {
+    "hook_event_name": "SessionEnd",
+    "session_id": "s_fix_1",
+    "reason": "exit"
+   },
+   "expected": {
+    "type": "session.ended",
+    "data": {
+     "reason": "normal"
+    },
+    "$comment": "vendor reasons (exit|clear|logout|prompt_input_exit|other) collapse to the schema enum normal — the sibling adapters convention"
+   }
+  },
+  "BeforeAgent": {
+   "input": {
+    "hook_event_name": "BeforeAgent",
+    "session_id": "s_fix_1",
+    "prompt": "refactor the auth module"
+   },
+   "expected": {
+    "type": "run.started",
+    "data": {
+     "trigger": "user"
+    },
+    "$comment": "prompt is gated redacted; the adapter synthesizes the run id here"
+   }
+  },
+  "AfterAgent": {
+   "input": {
+    "hook_event_name": "AfterAgent",
+    "session_id": "s_fix_1",
+    "prompt": "refactor the auth module",
+    "prompt_response": "done — three files changed",
+    "stop_hook_active": false
+   },
+   "expected": {
+    "type": "run.finished",
+    "data": {},
+    "$comment": "response text is message-stream territory (AEP-0007) — deliberately not captured on the run terminal"
+   }
+  },
+  "BeforeTool": {
+   "input": {
+    "hook_event_name": "BeforeTool",
+    "session_id": "s_fix_1",
+    "tool_name": "write_file",
+    "tool_input": {
+     "file_path": "/home/user/proj/src/app.ts",
+     "content": "export const x = 1;"
+    }
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "tool": {
+      "name": "write_file"
+     },
+     "args_digest": "3cbd8a09a4e39360672cdb0bde2b73ff"
+    },
+    "subject": "write_file",
+    "$comment": "args ride only at capture full; the digest is always present (Gemini exposes no tool call id — pairing is adapter runtime state)"
+   }
+  },
+  "AfterTool": {
+   "input": {
+    "hook_event_name": "AfterTool",
+    "session_id": "s_fix_1",
+    "tool_name": "write_file",
+    "tool_input": {
+     "file_path": "/home/user/proj/src/app.ts",
+     "content": "export const x = 1;"
+    },
+    "tool_response": {
+     "llmContent": "wrote 1 file",
+     "returnDisplay": "Wrote src/app.ts"
+    }
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "write_file"
+     },
+     "result_digest": "1c95dae9a3f1d728f148f3a19e2af573"
+    },
+    "subject": "write_file"
+   }
+  },
+  "AfterTool-error": {
+   "input": {
+    "hook_event_name": "AfterTool",
+    "session_id": "s_fix_1",
+    "tool_name": "read_file",
+    "tool_input": {
+     "file_path": "/home/user/missing.txt"
+    },
+    "tool_response": {
+     "error": {
+      "type": "FileNotFound",
+      "message": "no such file: /home/user/missing.txt"
+     }
+    }
+   },
+   "expected": {
+    "type": "tool.failed",
+    "data": {
+     "tool": {
+      "name": "read_file"
+     },
+     "error": {
+      "type": "FileNotFound"
+     }
+    },
+    "subject": "read_file",
+    "$comment": "Gemini surfaces tool errors in tool_response.error — unlike Codex this maps to tool.failed honestly; error.message is gated redacted"
+   }
+  },
+  "BeforeModel": {
+   "input": {
+    "hook_event_name": "BeforeModel",
+    "session_id": "s_fix_1",
+    "llm_request": {
+     "model": "gemini-3-pro",
+     "messages": [],
+     "config": {}
+    }
+   },
+   "expected": {
+    "type": "x.gemini-cli.session.before_model",
+    "data": {
+     "model": "gemini-3-pro"
+    },
+    "$comment": "the model plane has no core equivalent (request/response internals fail the fleet-observer test) -> vendor namespace, model id at metadata"
+   }
+  },
+  "AfterModel": {
+   "input": {
+    "hook_event_name": "AfterModel",
+    "session_id": "s_fix_1",
+    "llm_request": {
+     "model": "gemini-3-pro"
+    },
+    "llm_response": {
+     "candidates": []
+    }
+   },
+   "expected": {
+    "type": "x.gemini-cli.session.after_model",
+    "data": {
+     "model": "gemini-3-pro"
+    },
+    "$comment": "fires per streamed chunk — the adapter emits it at severity debug and the example settings leave it unregistered by default"
+   }
+  },
+  "BeforeToolSelection": {
+   "input": {
+    "hook_event_name": "BeforeToolSelection",
+    "session_id": "s_fix_1",
+    "llm_request": {
+     "model": "gemini-3-pro"
+    }
+   },
+   "expected": {
+    "type": "x.gemini-cli.session.before_tool_selection",
+    "data": {
+     "model": "gemini-3-pro"
+    }
+   }
+  },
+  "PreCompress": {
+   "input": {
+    "hook_event_name": "PreCompress",
+    "session_id": "s_fix_1",
+    "trigger": "auto"
+   },
+   "expected": {
+    "type": "session.compacted",
+    "data": {
+     "trigger": "auto"
+    },
+    "$comment": "documented deviation: Gemini exposes only the PRE moment (advisory, unblockable) — the sibling adapters emit at post; same fleet fact, a timing skew of seconds"
+   }
+  },
+  "Notification": {
+   "input": {
+    "hook_event_name": "Notification",
+    "session_id": "s_fix_1",
+    "notification_type": "ToolPermission",
+    "message": "write_file wants to modify src/app.ts",
+    "details": {
+     "tool_name": "write_file"
+    }
+   },
+   "expected": {
+    "type": "progress.status",
+    "data": {},
+    "subject": "ToolPermission",
+    "$comment": "NOT attention.requested: the hook is observability-only (it can neither grant nor deny), so a respond affordance would be a lie; the permission moment stays visible. message is gated redacted"
+   }
+  }
+ },
+ "fallback": {
+  "$comment": "Unknown future hooks land in the vendor extension namespace (AEP-0001 §6 mechanical fallback, category session), never on a core type.",
+  "input": {
+   "hook_event_name": "SomeFutureHook",
+   "session_id": "s_fix_1"
+  },
+  "expected": {
+   "type": "x.gemini-cli.session.some_future_hook",
+   "data": {}
+  }
+ }
+}

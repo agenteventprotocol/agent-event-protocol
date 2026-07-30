@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/progress.task.planned.schema.json",
+  "title": "AEP payload: progress.task.planned",
+  "type": "object",
+  "properties": {
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "title": {
+          "type": "string",
+          "x-aep-capture": "redacted"
+        }
+      },
+      "x-aep-capture": "metadata"
+    },
+    "parent": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    }
+  }
+}

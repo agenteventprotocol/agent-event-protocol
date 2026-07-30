@@ -1,0 +1,21 @@
+{
+  "$comment": "AEP-0001 §8.1 total order (index = rank), the AEP-0005 §3.4 OTLP mapping, and the AEP-0005 §4.4 OCSF severity_id mapping.",
+  "order": ["debug", "info", "notice", "warning", "error", "critical"],
+  "default": "info",
+  "otlp": {
+    "debug":    { "severity_text": "DEBUG", "severity_number": 5 },
+    "info":     { "severity_text": "INFO",  "severity_number": 9 },
+    "notice":   { "severity_text": "INFO2", "severity_number": 10 },
+    "warning":  { "severity_text": "WARN",  "severity_number": 13 },
+    "error":    { "severity_text": "ERROR", "severity_number": 17 },
+    "critical": { "severity_text": "FATAL", "severity_number": 21 }
+  },
+  "ocsf": {
+    "debug":    1,
+    "info":     1,
+    "notice":   2,
+    "warning":  3,
+    "error":    4,
+    "critical": 5
+  }
+}

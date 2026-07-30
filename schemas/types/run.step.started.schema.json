@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/run.step.started.schema.json",
+  "title": "AEP payload: run.step.started",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "initial_num_steps": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

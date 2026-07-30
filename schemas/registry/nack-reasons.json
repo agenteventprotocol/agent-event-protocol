@@ -1,0 +1,4 @@
+{
+  "$comment": "AEP-0004 §3 control.rejected reason enum. 'timeout' is sender-synthesized only, never on the wire.",
+  "reasons": ["unsupported", "unauthorized", "busy", "refused", "invalid"]
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/aep-event.schema.json",
+  "title": "AEP Event Envelope (0.1)",
+  "description": "AEP-0001 §5: sixteen context attributes plus data. Extension attributes are lowercase alphanumeric <=20 chars with scalar values. Session/seq requiredness per AEP-0001 §5.2 and the AEP-0004 §2.2 command carve-out.",
+  "type": "object",
+  "properties": {
+    "aep": { "const": "0.1" },
+    "id": { "type": "string", "minLength": 1 },
+    "type": {
+      "type": "string",
+      "pattern": "^((agent|session|run|progress|tool|delegation|attention|resource|error|state|assessment|message|control)(\\.[a-z0-9_]+)+|x\\.[a-z0-9_-]+\\.[a-z0-9_]+(\\.[a-z0-9_]+)+)$"
+    },
+    "subject": { "type": "string", "minLength": 1 },
+    "time": { "type": "string", "format": "date-time" },
+    "source": { "type": "string", "format": "uri", "minLength": 1 },
+    "agent": { "type": "string", "minLength": 1 },
+    "session": { "type": "string", "minLength": 1 },
+    "run": { "type": "string", "minLength": 1 },
+    "step": { "type": "string", "minLength": 1 },
+    "seq": { "type": "integer", "minimum": 0 },
+    "epoch": { "type": "integer", "minimum": 0, "default": 0 },
+    "cause": { "type": "string", "minLength": 1 },
+    "traceparent": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$"
+    },
+    "severity": {
+      "enum": ["debug", "info", "notice", "warning", "error", "critical"],
+      "default": "info"
+    },
+    "capture": {
+      "enum": ["none", "metadata", "redacted", "full"],
+      "default": "metadata"
+    },
+    "data": { "type": "object" }
+  },
+  "required": ["aep", "id", "type", "time", "source", "agent"],
+  "propertyNames": { "pattern": "^[a-z0-9]{1,20}$" },
+  "additionalProperties": { "type": ["string", "integer", "boolean"] },
+  "allOf": [
+    {
+      "$comment": "agent-scoped events omit session/run/step/seq (AEP-0001 §5.2)",
+      "if": { "properties": { "type": { "pattern": "^agent\\." } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "session": false,
+          "run": false,
+          "step": false,
+          "seq": false
+        }
+      },
+      "else": {
+        "if": {
+          "properties": {
+            "type": {
+              "pattern": "^(control\\.attention\\.respond|control\\.cancel|control\\.pause|control\\.resume|x\\.[a-z0-9_-]+\\.control\\..+|attention\\.routed)$"
+            }
+          },
+          "required": ["type"]
+        },
+        "then": {
+          "$comment": "foreign-emitter session events (commands, attention.routed): session present, seq omitted (AEP-0001 §5.2 exception)",
+          "required": ["session"],
+          "properties": { "seq": false }
+        },
+        "else": {
+          "$comment": "ordinary session-scoped events",
+          "required": ["session", "seq"]
+        }
+      }
+    }
+  ]
+}

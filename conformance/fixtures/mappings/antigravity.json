@@ -1,0 +1,335 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the Antigravity table (the five-hook hooks.json command system shared by Antigravity 2.0 and the Antigravity CLI; DOCS provenance — the binary is closed: pinned against the official hooks documentation at antigravity.google/docs/hooks, fetched 2026-07-12, whose worked examples are these inputs' basis, plus the vendor's public changelog: CLI 1.1.1 current, 1.0.16 MINIMUM — the version whose changelog pins the safely-handled empty decision string that makes an observe-only PreToolUse reply possible; desktop 2.2.1; design record: docs/components/adapter-antigravity-design.md). Each entry pins the pure (hook, payload) -> events mapping at the adapter default posture (capture metadata): NO payload names its own hook event, so every entry carries the `hook` the registration argv supplies; PostToolUse entries carry the daemon's `join` result where one exists — the payload itself has NO tool name, and the registry requires one on tool.completed/tool.failed, so unjoined completions fall back to x.antigravity.step.completed (a name is never invented) and a dangling PreToolUse synthesizes NOTHING (denied/rejected/still-running are indistinguishable; approval outcomes are NOT hook-visible on this surface — no tool.denied, no attention.*). Envelope identity (conversationId -> session verbatim; session.started on first sight, NO session.ended ever; runs SYNTHESIZED — opened at the first invocation boundary, closed by Stop's typed terminationReason; the join table; the envelope step from the open invocation) is runtime state, pinned by the reference adapter smoke. There is NO payload schema-version sentinel — drift detection is the docs page and the vendor changelog watch.",
+ "identity": {
+  "session_from": "conversationId",
+  "run_from": null,
+  "$comment": "conversationId rides verbatim (a real UUID). No run id is on the wire (executionNum appears only at Stop, kept as metadata) — the adapter mints run ids; PreInvocation/PostInvocation set the envelope step from invocationNum."
+ },
+ "hooks": {
+  "pre_tool_use": {
+   "hook": "PreToolUse",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "toolCall": {
+     "name": "run_command",
+     "args": {
+      "CommandLine": "npm test",
+      "Cwd": "/workspace/project",
+      "WaitMsBeforeAsync": 5000
+     }
+    },
+    "stepIdx": 19
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "run_command"
+      },
+      "step_idx": 19,
+      "args_digest": "cbc0f04691518e33efd98110b46f3cca"
+     },
+     "subject": "run_command"
+    }
+   ],
+   "$comment": "the docs' worked example: the ONLY hook carrying the tool name and args — it feeds the (conversationId, stepIdx) join; args digest at metadata, whole args redacted+; step_idx IS the join key, said so"
+  },
+  "pre_tool_use_question_tool": {
+   "hook": "PreToolUse",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "toolCall": {
+     "name": "ask_question",
+     "args": {
+      "questions": [
+       {
+        "question": "Proceed?",
+        "options": [
+         "yes",
+         "no"
+        ],
+        "is_multi_select": false
+       }
+      ]
+     }
+    },
+    "stepIdx": 3
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "ask_question"
+      },
+      "step_idx": 3,
+      "args_digest": "7cfe8c059d060465e44b5890fb1e8625"
+     },
+     "subject": "ask_question"
+    }
+   ],
+   "$comment": "the vendor's interaction tools are observed as TOOLS (their own shape) — never re-mapped onto attention.*: the user's answer is not hook-visible"
+  },
+  "post_tool_use_ok_joined": {
+   "hook": "PostToolUse",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "stepIdx": 19,
+    "error": ""
+   },
+   "join": {
+    "name": "run_command"
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "run_command"
+      },
+      "step_idx": 19
+     },
+     "subject": "run_command"
+    }
+   ],
+   "$comment": "the THIN payload (stepIdx + error only): the daemon's join supplies the name the registry requires; an empty error is a completion"
+  },
+  "post_tool_use_error_joined": {
+   "hook": "PostToolUse",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "stepIdx": 5,
+    "error": "exit status 1"
+   },
+   "join": {
+    "name": "run_command"
+   },
+   "expected": [
+    {
+     "type": "tool.failed",
+     "data": {
+      "tool": {
+       "name": "run_command"
+      },
+      "step_idx": 5,
+      "error": {
+       "type": "tool_error"
+      }
+     },
+     "subject": "run_command"
+    }
+   ],
+   "$comment": "a non-empty error is the vendor's own failure fact: tool.failed, message redacted-gated"
+  },
+  "post_tool_use_unjoined": {
+   "hook": "PostToolUse",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "stepIdx": 5,
+    "error": ""
+   },
+   "expected": [
+    {
+     "type": "x.antigravity.step.completed",
+     "data": {
+      "failed": false,
+      "step_idx": 5
+     }
+    }
+   ],
+   "$comment": "no join entry (restart, matcher gap, mid-conversation attach): the honest-absence fallback — a tool name is NEVER invented (unlike AG-UI's name-unknown case this wire keeps no call id, only a positional index)"
+  },
+  "post_tool_use_unjoined_error": {
+   "hook": "PostToolUse",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "stepIdx": 8,
+    "error": "exit status 127"
+   },
+   "expected": [
+    {
+     "type": "x.antigravity.step.completed",
+     "data": {
+      "failed": true,
+      "step_idx": 8
+     }
+    }
+   ],
+   "$comment": "the unjoined failure keeps the outcome fact; the message is redacted-gated (absent at the default posture)"
+  },
+  "pre_invocation": {
+   "hook": "PreInvocation",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "invocationNum": 3,
+    "initialNumSteps": 10
+   },
+   "expected": [
+    {
+     "type": "run.step.started",
+     "data": {
+      "initial_num_steps": 10
+     },
+     "step": "3"
+    }
+   ],
+   "$comment": "a model invocation is a vendor-declared sub-run phase: run.step.started with invocationNum setting the envelope step (the second live source for the family). Run synthesis (run.started when no run is open) is runtime state, smoke-pinned"
+  },
+  "post_invocation": {
+   "hook": "PostInvocation",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "invocationNum": 3,
+    "initialNumSteps": 10
+   },
+   "expected": [
+    {
+     "type": "run.step.finished",
+     "data": {},
+     "step": "3"
+    }
+   ],
+   "$comment": "wire-INDISTINGUISHABLE from PreInvocation (\"Input Fields: Same as PreInvocation\") — the registration argv is the discriminator; the mapping claims only the boundary fact"
+  },
+  "stop_model_stop": {
+   "hook": "Stop",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "executionNum": 1,
+    "terminationReason": "model_stop",
+    "error": "",
+    "fullyIdle": true
+   },
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {
+      "termination_reason": "model_stop",
+      "execution_num": 1,
+      "fully_idle": true
+     }
+    }
+   ],
+   "$comment": "the typed terminationReason closes the synthesized run; executionNum and fullyIdle ride as metadata"
+  },
+  "stop_max_steps_exceeded": {
+   "hook": "Stop",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "executionNum": 1,
+    "terminationReason": "max_steps_exceeded",
+    "error": "",
+    "fullyIdle": false
+   },
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {
+      "termination_reason": "max_steps_exceeded",
+      "execution_num": 1,
+      "fully_idle": false
+     }
+    }
+   ],
+   "$comment": "a bounded termination is a COMPLETION with the reason as metadata (the ACP stopReason rule)"
+  },
+  "stop_error": {
+   "hook": "Stop",
+   "input": {
+    "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "workspacePaths": [
+     "/workspace/project"
+    ],
+    "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+    "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587",
+    "executionNum": 2,
+    "terminationReason": "error",
+    "error": "model backend unavailable",
+    "fullyIdle": true
+   },
+   "expected": [
+    {
+     "type": "run.failed",
+     "data": {
+      "reason": "error",
+      "error": {
+       "type": "error"
+      },
+      "execution_num": 2,
+      "fully_idle": true
+     }
+    }
+   ],
+   "$comment": "only the error reason fails the run; the message is redacted-gated"
+  }
+ },
+ "fallback": {
+  "hook": "SomeFutureHook",
+  "input": {
+   "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+   "workspacePaths": [
+    "/workspace/project"
+   ],
+   "transcriptPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587/.system_generated/logs/transcript.jsonl",
+   "artifactDirectoryPath": "~/.gemini/antigravity-cli/brain/ec33ebf9-0cba-4100-8142-c61503f6c587"
+  },
+  "expected": [
+   {
+    "type": "x.antigravity.hook.somefuturehook",
+    "data": {}
+   }
+  ],
+  "$comment": "the mechanical fallback for future hook event names: x.antigravity.hook.<name> (two segments after the vendor token, per the envelope schema pattern)"
+ }
+}

@@ -1,0 +1,682 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the pi table, verified against the published extension types in @earendil-works/pi-coding-agent@0.80.6 (the tarball ships the vendor docs at the same version; the fork @oh-my-pi/pi-coding-agent@16.4.6 is expected-compatible but UNANCHORED — its union diverges, see the design record). Each entry pins mapEvent at the adapter default posture (capture metadata; deltas OFF); entries whose behavior forks under the AEP_PI_DELTAS opt-in carry deltas_expected. expected is {type, data, subject, step}. Identity and runtime wiring (ctx.sessionManager -> session with cwd/session-file redacted-gated; runs synthesized per AGENT LOOP — agent_start opens, agent_end closes on the last assistant message stopReason, a retried loop is a NEW run; toolCallId -> cause pairing; x.pi.* at debug severity) are receiver state, smoke-pinned in the reference repository. Deliberate nulls: message/tool stream updates at the default posture; non-user message starts; non-assistant message ends. The message boundary facts stay x.pi.message.* while the registry’s message.user.submitted / message.agent.replied are RESERVED (the sub-profile has not graduated) — the AG-UI/Cline refusal, applied at design review. NO attention.*/tool.denied claims: approval outcomes are not visible on the upstream bus (the fork’s typed tool_approval_requested/resolved pair is the named trigger).",
+ "identity": {
+  "session_from": "ctx.sessionManager.getSessionId() — read by the shim at forward time and attached to every moment ({session:{id,file,cwd}})",
+  "run_from": null,
+  "$comment": "No run id rides the bus; the daemon synthesizes one run per agent loop (agent_start opens; agent_end closes; duplicate opens keep the live run). turnIndex sets the envelope step verbatim (stringified). toolCallId pairs the tool trio exactly."
+ },
+ "moments": {
+  "session_start": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "session_start",
+     "reason": "startup"
+    }
+   },
+   "expected": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "pi"
+     },
+     "reason": "startup"
+    }
+   },
+   "$comment": "client name is the vendor one-word identifier; the typed arrival reason is metadata; cwd/session-file identity is runtime wiring (redacted-gated), smoke-pinned"
+  },
+  "session_start_resume": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "session_start",
+     "reason": "resume",
+     "previousSessionFile": "/home/user/.pi/agent/sessions/--proj--/20260701_old.jsonl"
+    }
+   },
+   "expected": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "pi"
+     },
+     "reason": "resume"
+    }
+   },
+   "$comment": "resume/fork arrivals are facts, not new identities; the previous session file is a machine path, gated redacted+ — dropped at the default ceiling"
+  },
+  "session_shutdown": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "session_shutdown",
+     "reason": "quit"
+    }
+   },
+   "expected": {
+    "type": "session.ended",
+    "data": {
+     "reason": "normal",
+     "vendor_reason": "quit"
+    }
+   },
+   "$comment": "every vendor teardown reason is orderly — schema reason normal, the vendor value alongside"
+  },
+  "session_compact": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "session_compact",
+     "compactionEntry": {},
+     "fromExtension": false,
+     "reason": "threshold",
+     "willRetry": false
+    }
+   },
+   "expected": {
+    "type": "session.compacted",
+    "data": {
+     "reason": "threshold",
+     "will_retry": false
+    }
+   },
+   "$comment": "the vendor post moment (the OpenCode/Kilo rule); typed reason manual|threshold|overflow; willRetry marks overflow-recovery compactions"
+  },
+  "agent_start": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "agent_start"
+    }
+   },
+   "expected": {
+    "type": "run.started",
+    "data": {}
+   },
+   "$comment": "one agent loop = one run; the run id is daemon-synthesized (no run id rides the bus), smoke-pinned"
+  },
+  "agent_end_stop": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "agent_end",
+     "messages": [
+      {
+       "role": "user",
+       "content": "fix the flaky test",
+       "timestamp": 2
+      },
+      {
+       "role": "assistant",
+       "content": [
+        {
+         "type": "text",
+         "text": "Done — the suite is green."
+        }
+       ],
+       "stopReason": "stop",
+       "usage": {
+        "input": 120,
+        "output": 40
+       },
+       "timestamp": 3
+      }
+     ]
+    }
+   },
+   "expected": {
+    "type": "run.finished",
+    "data": {
+     "stop_reason": "stop",
+     "gen_ai.usage.input_tokens": 120,
+     "gen_ai.usage.output_tokens": 40
+    }
+   },
+   "$comment": "the terminal is typed by the LAST assistant message stopReason; stop/length/toolUse are completions with the reason and token usage as metadata"
+  },
+  "agent_end_error": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "agent_end",
+     "messages": [
+      {
+       "role": "assistant",
+       "content": [],
+       "stopReason": "error",
+       "errorMessage": "rate limited",
+       "usage": {
+        "input": 1,
+        "output": 0
+       }
+      }
+     ]
+    }
+   },
+   "expected": {
+    "type": "run.failed",
+    "data": {
+     "reason": "error",
+     "stop_reason": "error",
+     "error": {
+      "type": "error"
+     }
+    }
+   },
+   "$comment": "stopReason error -> run.failed; the schema requires error — the generic class rides at metadata, the vendor message is redacted-gated (dropped here)"
+  },
+  "agent_end_aborted": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "agent_end",
+     "messages": [
+      {
+       "role": "assistant",
+       "content": [],
+       "stopReason": "aborted",
+       "usage": {
+        "input": 1,
+        "output": 0
+       }
+      }
+     ]
+    }
+   },
+   "expected": {
+    "type": "run.cancelled",
+    "data": {
+     "stop_reason": "aborted"
+    }
+   },
+   "$comment": "aborted -> run.cancelled; user Esc and programmatic aborts are indistinguishable on this surface, so no `by` claim"
+  },
+  "agent_end_empty": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "agent_end",
+     "messages": []
+    }
+   },
+   "expected": {
+    "type": "run.finished",
+    "data": {}
+   },
+   "$comment": "a loop with no assistant message closes as a bare completion; the daemon drops it entirely when no run is open (smoke-pinned)"
+  },
+  "agent_settled": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "agent_settled"
+    }
+   },
+   "expected": {
+    "type": "x.pi.agent.settled",
+    "data": {}
+   },
+   "$comment": "the vendor final-settlement marker (no retry/compaction/continuation will run) — how a consumer tells a final run from a retried one; the extension bus carries neither willRetry nor the auto_retry pair"
+  },
+  "turn_start": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "turn_start",
+     "turnIndex": 0,
+     "timestamp": 1
+    }
+   },
+   "expected": {
+    "type": "run.step.started",
+    "data": {},
+    "step": "0"
+   },
+   "$comment": "the vendor declares turnIndex on BOTH boundaries — envelope step (a string by schema) with zero synthesis; the run.step.* family third live source"
+  },
+  "turn_end": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "turn_end",
+     "turnIndex": 0,
+     "message": {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "text",
+        "text": "Done — the suite is green."
+       }
+      ],
+      "stopReason": "stop",
+      "usage": {
+       "input": 120,
+       "output": 40
+      },
+      "timestamp": 3
+     },
+     "toolResults": []
+    }
+   },
+   "expected": {
+    "type": "run.step.finished",
+    "data": {},
+    "step": "0"
+   },
+   "$comment": "toolResults are not re-emitted — the tool trio already carried them"
+  },
+  "message_start_user": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "message_start",
+     "message": {
+      "role": "user",
+      "content": "fix the flaky test",
+      "timestamp": 2
+     }
+    }
+   },
+   "expected": {
+    "type": "x.pi.message.submitted",
+    "data": {
+     "content_digest": "2b60074dfb7723b61eb58d8e04633aed"
+    }
+   },
+   "$comment": "RESERVED-type refusal: message.user.submitted stays unshipped until the message sub-profile graduates — the fact rides vendor-scoped at debug with a digest at metadata"
+  },
+  "message_start_assistant": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "message_start",
+     "message": {
+      "role": "assistant",
+      "content": [],
+      "timestamp": 2
+     }
+    }
+   },
+   "expected": null,
+   "$comment": "deliberate null: the assistant boundary is taken once, at message_end"
+  },
+  "message_update": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "message_update",
+     "message": {
+      "role": "assistant",
+      "content": []
+     },
+     "assistantMessageEvent": {
+      "type": "text_delta",
+      "delta": "On"
+     }
+    }
+   },
+   "expected": null,
+   "deltas_expected": {
+    "type": "x.pi.message.delta",
+    "data": {
+     "kind": "text_delta"
+    }
+   },
+   "$comment": "token streaming is stream-shaped: nothing at the default posture; x.pi.message.delta at debug under the AEP_PI_DELTAS opt-in"
+  },
+  "message_end_assistant": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "message_end",
+     "message": {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "text",
+        "text": "Done — the suite is green."
+       }
+      ],
+      "stopReason": "stop",
+      "usage": {
+       "input": 120,
+       "output": 40
+      },
+      "timestamp": 3
+     }
+    }
+   },
+   "expected": {
+    "type": "x.pi.message.replied",
+    "data": {
+     "stop_reason": "stop",
+     "gen_ai.usage.input_tokens": 120,
+     "gen_ai.usage.output_tokens": 40,
+     "content_digest": "221343a0569de713ac436fff133d8f58"
+    }
+   },
+   "$comment": "RESERVED-type refusal, same rule: message.agent.replied is reserved — stop reason + token usage + content digest at metadata, content redacted+"
+  },
+  "message_end_toolresult": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "message_end",
+     "message": {
+      "role": "toolResult",
+      "toolCallId": "call_1",
+      "toolName": "bash",
+      "content": [
+       {
+        "type": "text",
+        "text": "ok"
+       }
+      ],
+      "isError": false,
+      "timestamp": 4
+     }
+    }
+   },
+   "expected": null,
+   "$comment": "deliberate null: the tool trio owns toolResult messages — no double claim"
+  },
+  "tool_execution_start": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "tool_execution_start",
+     "toolCallId": "call_1",
+     "toolName": "bash",
+     "args": {
+      "command": "npm test"
+     }
+    }
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "tool": {
+      "name": "bash",
+      "call_id": "call_1"
+     },
+     "args_digest": "9178ac939ad908d8fd89e97596cdc0e5"
+    },
+    "subject": "bash"
+   },
+   "$comment": "toolCallId pairs the trio; args digest at metadata, whole args redacted+"
+  },
+  "tool_execution_update": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "tool_execution_update",
+     "toolCallId": "call_1",
+     "toolName": "bash",
+     "args": {
+      "command": "npm test"
+     },
+     "partialResult": "running 1 of 42"
+    }
+   },
+   "expected": null,
+   "deltas_expected": {
+    "type": "x.pi.tool.update",
+    "data": {
+     "tool": {
+      "name": "bash",
+      "call_id": "call_1"
+     },
+     "partial_digest": "56cda86bf9690fab19bdde50403c9e46"
+    },
+    "subject": "bash"
+   },
+   "$comment": "partial results are stream-shaped: nothing at the default posture; x.pi.tool.update with a partial digest under the opt-in"
+  },
+  "tool_execution_end_ok": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "tool_execution_end",
+     "toolCallId": "call_1",
+     "toolName": "bash",
+     "result": {
+      "content": [
+       {
+        "type": "text",
+        "text": "ok 42 tests"
+       }
+      ]
+     },
+     "isError": false
+    }
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "bash",
+      "call_id": "call_1"
+     },
+     "result_digest": "7761d9b5280883e3a6073abce5bcc444"
+    },
+    "subject": "bash"
+   },
+   "$comment": "result digest at metadata, whole result redacted+"
+  },
+  "tool_execution_end_error": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "tool_execution_end",
+     "toolCallId": "call_2",
+     "toolName": "read",
+     "result": {
+      "content": [
+       {
+        "type": "text",
+        "text": "EACCES: permission denied"
+       }
+      ]
+     },
+     "isError": true
+    }
+   },
+   "expected": {
+    "type": "tool.failed",
+    "data": {
+     "tool": {
+      "name": "read",
+      "call_id": "call_2"
+     },
+     "error": {
+      "type": "error"
+     }
+    },
+    "subject": "read"
+   },
+   "$comment": "the honest split: the vendor’s own typed isError flag, never inferred; the schema requires error — generic class at metadata, message redacted-gated"
+  },
+  "session_info_changed": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "session_info_changed",
+     "name": "flaky-test fix"
+    }
+   },
+   "expected": {
+    "type": "x.pi.session.info",
+    "data": {}
+   },
+   "$comment": "machinery fact at debug; the session name is user content, redacted-gated — dropped at the default ceiling"
+  },
+  "session_tree": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "session_tree"
+    }
+   },
+   "expected": {
+    "type": "x.pi.session.tree",
+    "data": {}
+   },
+   "$comment": "tree navigation is workspace machinery, never core"
+  },
+  "model_select": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "model_select",
+     "model": {
+      "id": "demo-model-1"
+     },
+     "source": "cycle"
+    }
+   },
+   "expected": {
+    "type": "x.pi.model.select",
+    "data": {
+     "source": "cycle",
+     "model": "demo-model-1"
+    }
+   },
+   "$comment": "model identity is metadata; the typed source (set|cycle|restore) rides alongside"
+  },
+  "thinking_level_select": {
+   "input": {
+    "session": {
+     "id": "s_fix_1",
+     "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+     "cwd": "/home/user/proj"
+    },
+    "event": {
+     "type": "thinking_level_select",
+     "level": "high",
+     "previousLevel": "medium"
+    }
+   },
+   "expected": {
+    "type": "x.pi.thinking.select",
+    "data": {
+     "level": "high"
+    }
+   },
+   "$comment": "machinery fact at debug"
+  }
+ },
+ "fallback": {
+  "input": {
+   "session": {
+    "id": "s_fix_1",
+    "file": "/home/user/.pi/agent/sessions/--proj--/20260712_s_fix_1.jsonl",
+    "cwd": "/home/user/proj"
+   },
+   "event": {
+    "type": "wholly_novel_event",
+    "payload": 1
+   }
+  },
+  "expected": {
+   "type": "x.pi.event.wholly_novel_event",
+   "data": {}
+  },
+  "$comment": "the mechanical fallback for future bus members: the `event` family segment keeps every fallback two segments deep in x.pi.*"
+ }
+}

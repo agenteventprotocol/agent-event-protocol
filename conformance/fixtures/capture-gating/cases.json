@@ -1,0 +1,68 @@
+{
+  "$comment": "AEP-0006 / AEP-0002 §5.3: type-dependent capture gating for attention.answered.answer.values. A string-typed field's value — and an `other` free-text value on a select field — is user-authored text (redacted minimum, like answer.text); number/boolean/closed-select values are structural ids/primitives and survive at metadata. Each case: field_spec list + full values + the ceiling the emitter is gating for + the exact values object that must come out. Free-text sample values are deliberately redaction-neutral so both runners can assert exact equality (the §9.4 text-pipeline behavior has its own corpus in fixtures/redaction/).",
+  "cases": [
+    {
+      "name": "metadata ceiling drops free text, keeps structural (the asymmetry)",
+      "fields": [
+        { "id": "name", "type": "string", "label": "Service name", "required": true },
+        { "id": "replicas", "type": "number", "label": "Replica count" },
+        { "id": "staged", "type": "boolean", "label": "Deploy to staging first?" },
+        { "id": "regions", "type": "select", "label": "Regions", "multi": true, "choices": [{ "id": "1", "label": "us-east" }, { "id": "2", "label": "eu-west" }, { "id": "3", "label": "ap-south" }] },
+        { "id": "db", "type": "select", "label": "Database", "other": true, "choices": [{ "id": "1", "label": "PostgreSQL" }, { "id": "2", "label": "SQLite" }] }
+      ],
+      "values": { "name": "billing-api", "replicas": 3, "staged": true, "regions": ["1", "3"], "db": "MariaDB" },
+      "ceiling": "metadata",
+      "expect": { "replicas": 3, "staged": true, "regions": ["1", "3"] }
+    },
+    {
+      "name": "redacted ceiling keeps everything (free text through the pipeline)",
+      "fields": [
+        { "id": "name", "type": "string", "label": "Service name", "required": true },
+        { "id": "replicas", "type": "number", "label": "Replica count" },
+        { "id": "staged", "type": "boolean", "label": "Deploy to staging first?" },
+        { "id": "regions", "type": "select", "label": "Regions", "multi": true, "choices": [{ "id": "1", "label": "us-east" }, { "id": "2", "label": "eu-west" }, { "id": "3", "label": "ap-south" }] },
+        { "id": "db", "type": "select", "label": "Database", "other": true, "choices": [{ "id": "1", "label": "PostgreSQL" }, { "id": "2", "label": "SQLite" }] }
+      ],
+      "values": { "name": "billing-api", "replicas": 3, "staged": true, "regions": ["1", "3"], "db": "MariaDB" },
+      "ceiling": "redacted",
+      "expect": { "name": "billing-api", "replicas": 3, "staged": true, "regions": ["1", "3"], "db": "MariaDB" }
+    },
+    {
+      "name": "closed single-select id is structural at metadata",
+      "fields": [
+        { "id": "db", "type": "select", "label": "Database", "choices": [{ "id": "1", "label": "PostgreSQL" }, { "id": "2", "label": "SQLite" }] }
+      ],
+      "values": { "db": "2" },
+      "ceiling": "metadata",
+      "expect": { "db": "2" }
+    },
+    {
+      "name": "other free text on a select is dropped at metadata even though a choice id would survive",
+      "fields": [
+        { "id": "db", "type": "select", "label": "Database", "other": true, "choices": [{ "id": "1", "label": "PostgreSQL" }, { "id": "2", "label": "SQLite" }] }
+      ],
+      "values": { "db": "MariaDB" },
+      "ceiling": "metadata",
+      "expect": {}
+    },
+    {
+      "name": "none ceiling drops even structural values (values object empties, not leaks)",
+      "fields": [
+        { "id": "staged", "type": "boolean", "label": "Deploy to staging first?" }
+      ],
+      "values": { "staged": false },
+      "ceiling": "none",
+      "expect": { "staged": false },
+      "$comment": "values gating is field-level within data; at ceiling none the whole data object is already gone (AEP-0001 §8.2 downlevel drops data wholesale) — this case pins that gateFormValues itself only implements the metadata/redacted asymmetry and structural values pass, the envelope-level drop being the caller's job"
+    },
+    {
+      "name": "keys without a matching field_spec are dropped (conservative)",
+      "fields": [
+        { "id": "staged", "type": "boolean", "label": "Deploy to staging first?" }
+      ],
+      "values": { "staged": true, "surprise": "not in the contract" },
+      "ceiling": "redacted",
+      "expect": { "staged": true }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/resource.retrieval.requested.schema.json",
+  "title": "AEP payload: resource.retrieval.requested",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "query_digest": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "corpus": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "top_k": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

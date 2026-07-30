@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/assessment.feedback.received.schema.json",
+  "title": "AEP payload: assessment.feedback.received",
+  "type": "object",
+  "properties": {
+    "rating": {
+      "type": "number",
+      "x-aep-capture": "metadata"
+    },
+    "label": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "comment": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "correction": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "source": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    }
+  }
+}

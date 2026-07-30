@@ -1,0 +1,210 @@
+{
+  "$comment": "Adversarial corpus for the AEP-0003 §9.4 redaction pipeline. The normative minimum (a)-(d) is the floor; several cases assert hardening beyond it (the spec explicitly allows redacting more). Rule (a)/(b) failures post-emission are security incidents, not conformance nits. `opts.home` is pinned so cases are machine-independent. Out of scope, documented: base64/hex-encoded secrets, unicode-homoglyph key names, secrets in object KEY names (keys are structural), prose-obfuscated PII ('user at example dot com').",
+  "text_cases": [
+    {
+      "name": "PEM block, multiline",
+      "input": "config follows\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA7bq\nZzz999\n-----END RSA PRIVATE KEY-----\ndone",
+      "must_not_contain": ["MIIEowIBAAKCAQEA7bq", "BEGIN RSA"],
+      "must_contain": ["[REDACTED:secret]", "config follows", "done"]
+    },
+    {
+      "name": "PEM block, OPENSSH variant",
+      "input": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXk\n-----END OPENSSH PRIVATE KEY-----",
+      "must_not_contain": ["b3BlbnNzaC1rZXk"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "AWS access key id, bare",
+      "input": "run with AKIAIOSFODNN7EXAMPLE please",
+      "must_not_contain": ["AKIAIOSFODNN7EXAMPLE"],
+      "must_contain": ["[REDACTED:secret]", "run with"]
+    },
+    {
+      "name": "Bearer token, canonical case",
+      "input": "curl -H 'Authorization: Bearer abc123.DEF-456_ghi~789' https://x.test",
+      "must_not_contain": ["abc123.DEF-456_ghi~789"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "bearer token, lowercase scheme (RFC 6750 schemes are case-insensitive)",
+      "input": "authorization: bearer abc123DEF456ghi789",
+      "must_not_contain": ["abc123DEF456ghi789"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "bearer as prose is not over-redacted",
+      "input": "the bearer of good news arrived",
+      "must_contain": ["the bearer of good news arrived"],
+      "must_not_contain": ["[REDACTED"]
+    },
+    {
+      "name": "key=value assignment, plain",
+      "input": "export API_KEY=sk_live_abcdef123456 && run",
+      "must_not_contain": ["sk_live_abcdef123456"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "key: value assignment with spaces",
+      "input": "password : hunter2sequel",
+      "must_not_contain": ["hunter2sequel"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "JSON-quoted credential assignment (quote between key and colon)",
+      "input": "payload {\"token\": \"tok_9f8e7d6c5b4a\"} sent",
+      "must_not_contain": ["tok_9f8e7d6c5b4a"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "JSON-quoted api_key",
+      "input": "{\"api_key\": \"AQ0meta11223344\", \"region\": \"eu\"}",
+      "must_not_contain": ["AQ0meta11223344"],
+      "must_contain": ["region"]
+    },
+    {
+      "name": "value on next line after key=",
+      "input": "token=\nZX12abcdef",
+      "must_not_contain": ["ZX12abcdef"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "JWT-shaped string, bare",
+      "input": "session eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.SflKxwRJSMeKKF2QT4fwpM done",
+      "must_not_contain": ["eyJhbGciOiJIUzI1NiJ9"],
+      "must_contain": ["[REDACTED:secret]", "session", "done"]
+    },
+    {
+      "name": "GitHub classic PAT, bare (no key= prefix)",
+      "input": "clone with ghp_AbCdEfGhIjKlMnOpQrStUvWxYz012345 now",
+      "must_not_contain": ["ghp_AbCdEfGhIjKlMnOpQrStUvWxYz012345"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "GitHub fine-grained PAT, bare",
+      "input": "github_pat_11ABCDEFG0123456789_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMN",
+      "must_not_contain": ["github_pat_11ABCDEFG"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "GitLab PAT, bare",
+      "input": "push with glpat-AbCdEfGhIjKlMnOpQrSt",
+      "must_not_contain": ["glpat-AbCdEfGhIjKlMnOpQrSt"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "Slack bot token, bare",
+      "input": "notify via xoxb-123456789012-ABCDEFabcdef",
+      "must_not_contain": ["xoxb-123456789012-ABCDEFabcdef"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "OpenAI-style sk- key, bare",
+      "input": "using sk-proj-AbCdEf123456GhIjKl789012 for inference",
+      "must_not_contain": ["sk-proj-AbCdEf123456GhIjKl789012"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "Google API key, bare",
+      "input": "maps key AIzaSyA1bC2dE3fG4hI5jK6lM7nO8pQ9rS0tUvW end",
+      "must_not_contain": ["AIzaSyA1bC2dE3fG4hI5jK6lM7nO8pQ9rS0tUvW"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "operator-configured secret value (rule b)",
+      "opts": { "secretValues": ["s3cr3t-deploy-key-value"] },
+      "input": "deploying with s3cr3t-deploy-key-value to prod",
+      "must_not_contain": ["s3cr3t-deploy-key-value"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "operator home path replaced (rule c)",
+      "opts": { "home": "/home/operator" },
+      "input": "reading /home/operator/.ssh/config now",
+      "must_not_contain": ["/home/operator"],
+      "must_contain": ["~/.ssh/config"]
+    },
+    {
+      "name": "any /home/<user> path replaced (hardening beyond floor)",
+      "opts": { "home": "/home/operator" },
+      "input": "copied to /home/alice/project/file.txt",
+      "must_not_contain": ["/home/alice"],
+      "must_contain": ["~/project/file.txt"]
+    },
+    {
+      "name": "macOS /Users/<user> path replaced (hardening beyond floor)",
+      "opts": { "home": "/home/operator" },
+      "input": "backup at /Users/bob/Documents/x.key",
+      "must_not_contain": ["/Users/bob"],
+      "must_contain": ["~/Documents/x.key"]
+    },
+    {
+      "name": "email redacted as PII (rule d, on by default)",
+      "input": "contact jane.doe+test@example.co.uk for access",
+      "must_not_contain": ["jane.doe+test@example.co.uk"],
+      "must_contain": ["[REDACTED:pii]"]
+    },
+    {
+      "name": "phone number redacted as PII",
+      "input": "call +1 (555) 123-4567 tomorrow",
+      "must_not_contain": ["555) 123-4567"],
+      "must_contain": ["[REDACTED:pii]"]
+    },
+    {
+      "name": "PII pass-through when operator disables rule d",
+      "opts": { "pii": false },
+      "input": "contact ops@example.com",
+      "must_contain": ["ops@example.com"],
+      "must_not_contain": ["[REDACTED:pii]"]
+    },
+    {
+      "name": "secret rule wins over PII inside credential value (order a before d)",
+      "input": "password=foo@bar.com",
+      "must_not_contain": ["foo@bar.com"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "plain prose untouched",
+      "input": "ran 42 tests, 0 failures, in 3.1s",
+      "must_contain": ["ran 42 tests, 0 failures, in 3.1s"],
+      "must_not_contain": ["[REDACTED"]
+    },
+    {
+      "name": "version numbers are not phone numbers",
+      "input": "upgraded to node 22.11.0 and pnpm 9.14.2 quickly",
+      "must_not_contain": ["[REDACTED"],
+      "must_contain": ["22.11.0"]
+    }
+  ],
+  "value_cases": [
+    {
+      "name": "credential-named object key: value dropped even without pattern match",
+      "input": { "token": "plainlooking0value", "kind": "auth" },
+      "must_not_contain": ["plainlooking0value"],
+      "must_contain": ["auth"]
+    },
+    {
+      "name": "credential-named key, nested + case variants",
+      "input": { "config": { "API_KEY": "zz00zz11", "Password": "correct horse", "region": "eu-1" } },
+      "must_not_contain": ["zz00zz11", "correct horse"],
+      "must_contain": ["eu-1"]
+    },
+    {
+      "name": "authorization header object value dropped",
+      "input": { "headers": { "authorization": "Basic dXNlcjpwYXNz" } },
+      "must_not_contain": ["dXNlcjpwYXNz"],
+      "must_contain": ["[REDACTED:secret]"]
+    },
+    {
+      "name": "secrets inside array strings",
+      "input": { "argv": ["--key", "AKIAIOSFODNN7EXAMPLE", "--verbose"] },
+      "must_not_contain": ["AKIAIOSFODNN7EXAMPLE"],
+      "must_contain": ["--verbose"]
+    },
+    {
+      "name": "non-string values untouched",
+      "input": { "count": 42, "ratio": 0.5, "ok": true, "nothing": null },
+      "must_contain": ["42", "0.5", "true", "null"],
+      "must_not_contain": ["[REDACTED"]
+    }
+  ]
+}

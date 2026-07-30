@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/tool.denied.schema.json",
+  "title": "AEP payload: tool.denied",
+  "type": "object",
+  "properties": {
+    "tool": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "call_id": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        }
+      },
+      "x-aep-capture": "metadata",
+      "required": [
+        "name"
+      ]
+    },
+    "by": {
+      "enum": [
+        "policy",
+        "user_setting",
+        "runtime"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "rule": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    }
+  },
+  "required": [
+    "tool",
+    "by"
+  ]
+}

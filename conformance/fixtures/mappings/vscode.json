@@ -1,0 +1,167 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the VS Code agent (Copilot) table — the 8 VSCode-target agent-hook events (Preview) -> core types + the vendor-extension fallback. Verified against the pinned vendor source (microsoft/vscode release/1.128 = 5264f2156; 1.129.0 tag 125df4672 contract-identical): hookTypes.ts (the VSCode-target event map), hookCommandTypes.ts + chatHookService.ts (per-event stdin payloads). Each entry pins the pure hook->event mapping at the adapter default posture (capture metadata; attention.* redacted). Envelope identity (session_id -> session, OPTIONAL on this surface; runs SYNTHESIZED per UserPromptSubmit — no turn id exists) and the opt-in held PreToolUse permission gate (AEP_VSCODE_CONTROL=1) are runtime state, pinned by the reference adapter smokes. Coverage honesty, pinned here as absences: the VSCode target has NO SessionEnd, NO failure twin for PostToolUse (success-only), and NO StopFailure/ErrorOccurred — session.ended, tool.failed, and run.failed have no vendor moment on this surface.",
+ "identity": {
+  "session_from": "session_id",
+  "run_from": null,
+  "$comment": "session_id is optional in the vendor envelope (built in executeHook); the adapter defaults a missing one to 'unknown'. No turn id is documented; the adapter synthesizes one run per UserPromptSubmit/Stop pair. tool_use_id pairs tool events exactly. transcript_path (a workstation-local file path) is deliberately never forwarded."
+ },
+ "hooks": {
+  "SessionStart": {
+   "input": {
+    "hook_event_name": "SessionStart",
+    "session_id": "s_fix_1",
+    "timestamp": "2026-07-16T09:00:00.000Z",
+    "transcript_path": "/home/user/.vscode/transcripts/s_fix_1.md",
+    "source": "new",
+    "model": "claude-sonnet-4-6",
+    "agent_type": "Plan"
+   },
+   "expected": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "vscode"
+     },
+     "trigger": "new",
+     "gen_ai.request.model": "claude-sonnet-4-6",
+     "agent_type": "Plan"
+    },
+    "$comment": "source is 'new' (the only documented value today); agent_type is the built-in or custom agent/mode name, a metadata-grade fact. The envelope timestamp and transcript_path do not ride: adapter clock is the sibling convention, and the transcript path is workstation-local minutiae."
+   }
+  },
+  "UserPromptSubmit": {
+   "input": {
+    "hook_event_name": "UserPromptSubmit",
+    "session_id": "s_fix_1",
+    "prompt": "refactor the auth module"
+   },
+   "expected": {
+    "type": "run.started",
+    "data": {
+     "trigger": "user"
+    },
+    "$comment": "prompt gated redacted; run id synthesized by the adapter"
+   }
+  },
+  "PreToolUse": {
+   "input": {
+    "hook_event_name": "PreToolUse",
+    "session_id": "s_fix_1",
+    "tool_name": "editFile",
+    "tool_input": {
+     "path": "/w/src/auth.ts",
+     "content": "x"
+    },
+    "tool_use_id": "call_a1"
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "tool": {
+      "name": "editFile",
+      "call_id": "call_a1"
+     },
+     "args_digest": "1d43f6cea83f21e51631112d1ebf0bce"
+    },
+    "subject": "editFile",
+    "$comment": "args digest always; args only at capture full. Under AEP_VSCODE_CONTROL=1 the daemon ALSO holds this hook open as attention.requested (kind permission, options allow/deny/ask) — runtime state, smoke-pinned, never part of the pure mapping."
+   }
+  },
+  "PostToolUse": {
+   "input": {
+    "hook_event_name": "PostToolUse",
+    "session_id": "s_fix_1",
+    "tool_name": "editFile",
+    "tool_input": {
+     "path": "/w/src/auth.ts",
+     "content": "x"
+    },
+    "tool_response": "File edited successfully",
+    "tool_use_id": "call_a1"
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "editFile",
+      "call_id": "call_a1"
+     },
+     "result_digest": "aafc307cc7c2f9c82163278bfeb9c2b2"
+    },
+    "subject": "editFile",
+    "$comment": "tool_response is a string on this surface (the typed contract). PostToolUse fires on SUCCESS ONLY — tool.failed has no vendor moment here (absent-and-documented; the OTel execute_tool span is the named future failure-visibility channel)."
+   }
+  },
+  "PreCompact": {
+   "input": {
+    "hook_event_name": "PreCompact",
+    "session_id": "s_fix_1",
+    "trigger": "auto",
+    "custom_instructions": "keep the design decisions"
+   },
+   "expected": {
+    "type": "session.compacted",
+    "data": {
+     "trigger": "auto"
+    },
+    "$comment": "DOCUMENTED DEVIATION from the CC/Qwen post-moment rule: this surface exposes ONLY the pre moment (no PostCompact exists in the VSCode target), so the pre moment is the one truthful carrier — emitted there, once. custom_instructions gated redacted."
+   }
+  },
+  "SubagentStart": {
+   "input": {
+    "hook_event_name": "SubagentStart",
+    "session_id": "s_fix_1",
+    "agent_id": "agent_7",
+    "agent_type": "Plan"
+   },
+   "expected": {
+    "type": "delegation.subagent.started",
+    "data": {
+     "agent_type": "Plan"
+    },
+    "subject": "agent_7",
+    "$comment": "agent_type at metadata — the Qwen convention"
+   }
+  },
+  "SubagentStop": {
+   "input": {
+    "hook_event_name": "SubagentStop",
+    "session_id": "s_fix_1",
+    "agent_id": "agent_7",
+    "agent_type": "Plan",
+    "stop_hook_active": false
+   },
+   "expected": {
+    "type": "delegation.subagent.stopped",
+    "data": {
+     "agent_type": "Plan"
+    },
+    "subject": "agent_7",
+    "$comment": "stop_hook_active is loop-control plumbing for the hook's own block affordance, not a session fact — not forwarded"
+   }
+  },
+  "Stop": {
+   "input": {
+    "hook_event_name": "Stop",
+    "session_id": "s_fix_1",
+    "stop_hook_active": false
+   },
+   "expected": {
+    "type": "run.finished",
+    "data": {},
+    "$comment": "closes the synthesized run (cause-linked by the adapter); no failure twin exists on this surface — run.failed has no vendor moment (StopFailure/ErrorOccurred live only in the coding-agent camelCase target)"
+   }
+  }
+ },
+ "fallback": {
+  "input": {
+   "hook_event_name": "SomeNewPreviewHook",
+   "session_id": "s_fix_1"
+  },
+  "expected": {
+   "type": "x.vscode.session.some_new_preview_hook",
+   "data": {},
+   "$comment": "AEP-0001 §6 mechanical vendor-extension fallback — the Preview surface may grow events (the standing format watch); unknown hooks degrade, never drop"
+  }
+ }
+}

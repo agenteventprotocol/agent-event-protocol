@@ -1,0 +1,342 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable fixture for the Codex OTel-inbound channel (design record: the spec repo docs/components/bridge-otlp-inbound-design.md). Each entry pins the pure record->event mapping over FLATTENED attributes at the default metadata ceiling, in BOTH modes: companion (the default — everything in the channel-visible x.codex.otel.* family, core types never emitted) and primary (hook-less deployments — the core subset). Keys follow the vendor-documented examples where observed; tool/decision keys are representative per the vendor descriptions and are refined at live validation. Envelope identity (conversation.id -> session, agent codex, no runs synthesized) is receiver wiring, pinned by the reference smoke.",
+ "identity": {
+  "session_from": "conversation.id",
+  "run_from": null,
+  "$comment": "runs are deliberately not synthesized: async export pipelines cannot pair run boundaries honestly (design note)"
+ },
+ "records": {
+  "conversation_starts": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.conversation_starts",
+     "model": "gpt-5.2-codex",
+     "approval_policy": "on-request",
+     "sandbox_policy": "workspace-write"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.conversation_starts",
+    "data": {
+     "model": "gpt-5.2-codex",
+     "approval_policy": "on-request",
+     "sandbox_policy": "workspace-write"
+    }
+   },
+   "primary": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "codex"
+     },
+     "gen_ai.request.model": "gpt-5.2-codex"
+    },
+    "$comment": "policies stay on the companion family (payload minimalism); the schema-valid core subset only"
+   }
+  },
+  "user_prompt": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.user_prompt",
+     "prompt": "[REDACTED]",
+     "prompt_length": "147"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.user_prompt",
+    "data": {
+     "prompt_length": "147"
+    },
+    "$comment": "prompt content forwards only when the vendor flag AND a redacted+ ceiling both allow (double gate)"
+   },
+   "primary": {
+    "type": "x.codex.otel.user_prompt",
+    "data": {
+     "prompt_length": "147"
+    },
+    "$comment": "prompt internals stay vendor-namespaced in BOTH modes (fleet-observer test)"
+   }
+  },
+  "tool_decision_config_deny": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.tool_decision",
+     "tool_name": "shell",
+     "decision": "deny",
+     "source": "config"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.tool_decision",
+    "data": {
+     "tool_name": "shell",
+     "decision": "deny",
+     "source": "config"
+    }
+   },
+   "primary": {
+    "type": "tool.denied",
+    "data": {
+     "tool": {
+      "name": "shell"
+     },
+     "by": "policy"
+    },
+    "subject": "shell",
+    "$comment": "a config deny is a policy block; an automation deny maps by: runtime"
+   }
+  },
+  "tool_decision_user_deny": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.tool_decision",
+     "tool_name": "shell",
+     "decision": "deny",
+     "source": "user"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.tool_decision",
+    "data": {
+     "tool_name": "shell",
+     "decision": "deny",
+     "source": "user"
+    }
+   },
+   "primary": null,
+   "$comment": "a user deny is a human decision already made in the CLI, not a policy block — tool.denied would misreport it; primary mode emits nothing (the companion family still carries it for analysis)"
+  },
+  "tool_result_ok": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.tool_result",
+     "tool_name": "shell",
+     "success": "true",
+     "duration_ms": "412"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.tool_result",
+    "data": {
+     "tool_name": "shell",
+     "success": "true",
+     "duration_ms": "412"
+    }
+   },
+   "primary": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "shell"
+     },
+     "duration_ms": 412
+    },
+    "subject": "shell"
+   }
+  },
+  "tool_result_fail": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.tool_result",
+     "tool_name": "shell",
+     "success": "false",
+     "duration_ms": "87",
+     "error": "exit 1"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.tool_result",
+    "data": {
+     "tool_name": "shell",
+     "success": "false",
+     "duration_ms": "87"
+    },
+    "$comment": "error text is redacted-gated"
+   },
+   "primary": {
+    "type": "tool.failed",
+    "data": {
+     "tool": {
+      "name": "shell"
+     },
+     "error": {
+      "type": "tool_error"
+     }
+    },
+    "subject": "shell",
+    "$comment": "error text is redacted-gated; the type is synthesized (the channel exposes free text, not a taxonomy)"
+   }
+  },
+  "api_request": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.api_request",
+     "status": "200",
+     "duration_ms": "900",
+     "attempts": "1"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.api_request",
+    "data": {
+     "status": "200",
+     "duration_ms": "900",
+     "attempts": "1"
+    }
+   },
+   "primary": {
+    "type": "x.codex.otel.api_request",
+    "data": {
+     "status": "200",
+     "duration_ms": "900",
+     "attempts": "1"
+    },
+    "$comment": "transport internals stay vendor-namespaced in BOTH modes"
+   }
+  },
+  "sse_event": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.sse_event",
+     "kind": "response.delta",
+     "success": "true"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.sse_event",
+    "data": {
+     "kind": "response.delta",
+     "success": "true"
+    }
+   },
+   "primary": {
+    "type": "x.codex.otel.sse_event",
+    "data": {
+     "kind": "response.delta",
+     "success": "true"
+    }
+   }
+  },
+  "websocket_event": {
+   "input": {
+    "resource": {
+     "service.name": "codex-app-server",
+     "service.version": "0.119.0",
+     "host.name": "dev-host-1"
+    },
+    "attributes": {
+     "conversation.id": "conv_fix_1",
+     "app.version": "0.119.0",
+     "originator": "Codex_CLI",
+     "event.name": "codex.websocket_event",
+     "kind": "open"
+    }
+   },
+   "companion": {
+    "type": "x.codex.otel.websocket_event",
+    "data": {
+     "kind": "open"
+    }
+   },
+   "primary": {
+    "type": "x.codex.otel.websocket_event",
+    "data": {
+     "kind": "open"
+    }
+   }
+  }
+ },
+ "unknown": {
+  "$comment": "foreign or future LogRecords fall to x.codex.otel.unknown rather than guessing (design note, non-goals)",
+  "input": {
+   "resource": {
+    "service.name": "codex-app-server",
+    "service.version": "0.119.0",
+    "host.name": "dev-host-1"
+   },
+   "attributes": {
+    "conversation.id": "conv_fix_1",
+    "app.version": "0.119.0",
+    "originator": "Codex_CLI",
+    "event.name": "codex.something_new",
+    "detail": "x"
+   }
+  },
+  "companion": {
+   "type": "x.codex.otel.unknown",
+   "data": {
+    "event.name": "codex.something_new"
+   }
+  },
+  "primary": {
+   "type": "x.codex.otel.unknown",
+   "data": {
+    "event.name": "codex.something_new"
+   }
+  }
+ }
+}

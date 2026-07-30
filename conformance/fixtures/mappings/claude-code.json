@@ -1,0 +1,251 @@
+{
+  "$comment": "AEP-0002 Annex A machine-usable mapping fixtures for the Claude Code table ('reproduced in conformance/fixtures/mappings/ as they gain fixtures'). First entry (AEP-0006): AskUserQuestion -> one attention.requested(kind:'form') per tool call — one event for the whole 1-4 question batch, one field_spec per question. run.js pins impl/adapter-claude-code/map-ask-user-question.js (the adapter's own mapping) against expected_data; run.py — spec-only, no adapter implementation — checks each expected payload against the attention.requested schema and the wire facts the mapping must guarantee (kind form, one field per question, other:true on every field, multi mirrors multiSelect).",
+  "ask_user_question": {
+    "$comment": "expected_data is the emitted `data` payload at capture redacted+ (real labels through the §9.4 pipeline); expected_data_metadata is the same call at capture metadata — labels degrade to structural placeholders per the field_spec.label/choices[].label [metadata*] exception. Field/choice ids are 1-based indexes so answer.values stays structural at any ceiling. The adapter assembles data as {kind:'form', ...mapping, respond_via:['control']}.",
+    "input": {
+      "questions": [
+        {
+          "question": "Which database should the new service use?",
+          "header": "Database",
+          "multiSelect": false,
+          "options": [
+            {
+              "label": "PostgreSQL",
+              "description": "relational, ACID"
+            },
+            {
+              "label": "SQLite",
+              "description": "embedded, zero-ops"
+            }
+          ]
+        },
+        {
+          "question": "Which regions should we roll out to?",
+          "header": "Regions",
+          "multiSelect": true,
+          "options": [
+            {
+              "label": "us-east"
+            },
+            {
+              "label": "eu-west"
+            }
+          ]
+        }
+      ]
+    },
+    "expected_data": {
+      "kind": "form",
+      "prompt": "claude-code asks 2 questions",
+      "fields": [
+        {
+          "id": "1",
+          "type": "select",
+          "label": "Database: Which database should the new service use?",
+          "required": true,
+          "other": true,
+          "choices": [
+            {
+              "id": "1",
+              "label": "PostgreSQL"
+            },
+            {
+              "id": "2",
+              "label": "SQLite"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "type": "select",
+          "label": "Regions: Which regions should we roll out to?",
+          "required": true,
+          "other": true,
+          "choices": [
+            {
+              "id": "1",
+              "label": "us-east"
+            },
+            {
+              "id": "2",
+              "label": "eu-west"
+            }
+          ],
+          "multi": true
+        }
+      ],
+      "respond_via": [
+        "control"
+      ]
+    },
+    "expected_data_metadata": {
+      "kind": "form",
+      "prompt": "claude-code asks 2 questions",
+      "fields": [
+        {
+          "id": "1",
+          "type": "select",
+          "label": "1",
+          "required": true,
+          "other": true,
+          "choices": [
+            {
+              "id": "1",
+              "label": "1"
+            },
+            {
+              "id": "2",
+              "label": "2"
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "type": "select",
+          "label": "2",
+          "required": true,
+          "other": true,
+          "choices": [
+            {
+              "id": "1",
+              "label": "1"
+            },
+            {
+              "id": "2",
+              "label": "2"
+            }
+          ],
+          "multi": true
+        }
+      ],
+      "respond_via": [
+        "control"
+      ]
+    }
+  },
+  "elicitation": {
+    "$comment": "Second Annex A pin (MCP elicitation -> AEP-0006 form): Claude Code's Elicitation hook surfaces an MCP server's elicitation/create request (message + restricted flat schema). Field ids are the schema property KEYS and enum choice ids the enum VALUES (both structural, server-defined), so accepted answer.values map back to the elicitation content verbatim; title/enumNames are display content — present at redacted+ (expected_data), degraded to the structural key/value at metadata (expected_data_metadata). MCP elicitation enums are CLOSED: no other:true escape, unlike AskUserQuestion. run.js pins impl/adapter-claude-code/map-elicitation.js against these; run.py checks schema validity + the wire facts.",
+    "input": {
+      "message": "Configure the deployment target",
+      "requestedSchema": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string",
+            "enum": [
+              "staging",
+              "production"
+            ],
+            "enumNames": [
+              "Staging",
+              "Production"
+            ],
+            "title": "Environment"
+          },
+          "replicas": {
+            "type": "integer",
+            "title": "Replica count"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Why now"
+          },
+          "confirm": {
+            "type": "boolean",
+            "title": "Proceed immediately"
+          }
+        },
+        "required": [
+          "environment",
+          "confirm"
+        ]
+      }
+    },
+    "expected_data": {
+      "kind": "form",
+      "prompt": "Configure the deployment target",
+      "fields": [
+        {
+          "id": "environment",
+          "type": "select",
+          "label": "Environment",
+          "required": true,
+          "choices": [
+            {
+              "id": "staging",
+              "label": "Staging"
+            },
+            {
+              "id": "production",
+              "label": "Production"
+            }
+          ]
+        },
+        {
+          "id": "replicas",
+          "type": "number",
+          "label": "Replica count",
+          "required": false
+        },
+        {
+          "id": "reason",
+          "type": "string",
+          "label": "Why now",
+          "required": false
+        },
+        {
+          "id": "confirm",
+          "type": "boolean",
+          "label": "Proceed immediately",
+          "required": true
+        }
+      ],
+      "respond_via": [
+        "control"
+      ]
+    },
+    "expected_data_metadata": {
+      "kind": "form",
+      "prompt": "claude-code requests input (4 fields)",
+      "fields": [
+        {
+          "id": "environment",
+          "type": "select",
+          "label": "environment",
+          "required": true,
+          "choices": [
+            {
+              "id": "staging",
+              "label": "staging"
+            },
+            {
+              "id": "production",
+              "label": "production"
+            }
+          ]
+        },
+        {
+          "id": "replicas",
+          "type": "number",
+          "label": "replicas",
+          "required": false
+        },
+        {
+          "id": "reason",
+          "type": "string",
+          "label": "reason",
+          "required": false
+        },
+        {
+          "id": "confirm",
+          "type": "boolean",
+          "label": "confirm",
+          "required": true
+        }
+      ],
+      "respond_via": [
+        "control"
+      ]
+    }
+  }
+}

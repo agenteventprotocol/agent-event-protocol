@@ -1,0 +1,732 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the OpenCode table. OpenCode surfaces two moment shapes, both pinned at the adapter default posture (capture metadata; attention.* redacted): bus events from the plugin's `event` hook (the @opencode-ai/sdk v1 Event union, verified against the published types v1.17.18) as {kind:'bus', event}, and the interception hooks (tool.execute.before/after, the hold-open permission.ask) with their typed payloads. expected is {type, data, subject}. Envelope identity and causal wiring (run synthesis on idle boundaries, callID pairing, the permission dedupe) are runtime state, pinned by the reference adapter smoke, not here. run.js checks the reference adapter module against these pins; run.py checks schema validity and the wire facts. Two deliberate nulls: bus permission.updated (the hold-open hook is the first-class carrier \u2014 the Qwen permission_prompt dedupe precedent) and bus todo.updated (a whole-list snapshot; the `todos` block below pins the pure snapshot diff instead).",
+ "identity": {
+  "session_from": "properties.sessionID | properties.info.sessionID | properties.info.id | permission.sessionID | input.sessionID (per moment shape)",
+  "run_from": null,
+  "$comment": "No turn id is exposed; the adapter synthesizes one run per user-message/idle boundary (message.updated role:user opens unless a run is open \u2014 steering never double-opens; session.idle closes). callID pairs tool events exactly."
+ },
+ "moments": {
+  "session_created": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "session.created",
+     "properties": {
+      "info": {
+       "id": "s_fix_1",
+       "projectID": "prj_1",
+       "directory": "/home/user/proj",
+       "title": "fix the build",
+       "version": "1.17.18",
+       "time": {
+        "created": 1
+       }
+      }
+     }
+    }
+   },
+   "expected": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "opencode",
+      "version": "1.17.18"
+     }
+    }
+   },
+   "$comment": "title and directory are user content, gated redacted \u2014 dropped at the default ceiling; client name+version are metadata"
+  },
+  "session_created_child": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "session.created",
+     "properties": {
+      "info": {
+       "id": "s_fix_child",
+       "projectID": "prj_1",
+       "directory": "/home/user/proj",
+       "parentID": "s_fix_1",
+       "title": "subtask",
+       "version": "1.17.18",
+       "time": {
+        "created": 2
+       }
+      }
+     }
+    }
+   },
+   "expected": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "opencode",
+      "version": "1.17.18"
+     },
+     "parent": {
+      "session": "s_fix_1"
+     }
+    }
+   },
+   "$comment": "a child session names its parent on the schema's own parent object \u2014 OpenCode's delegation shape; ids are metadata"
+  },
+  "session_deleted": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "session.deleted",
+     "properties": {
+      "info": {
+       "id": "s_fix_1",
+       "projectID": "prj_1",
+       "directory": "/home/user/proj",
+       "title": "fix the build",
+       "version": "1.17.18",
+       "time": {
+        "created": 1,
+        "updated": 9
+       }
+      }
+     }
+    }
+   },
+   "expected": {
+    "type": "session.ended",
+    "data": {
+     "reason": "normal"
+    }
+   }
+  },
+  "session_idle": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "session.idle",
+     "properties": {
+      "sessionID": "s_fix_1"
+     }
+    }
+   },
+   "expected": {
+    "type": "run.finished",
+    "data": {}
+   },
+   "$comment": "closes the adapter-synthesized run when one is open (runtime state decides emission)"
+  },
+  "session_compacted": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "session.compacted",
+     "properties": {
+      "sessionID": "s_fix_1"
+     }
+    }
+   },
+   "expected": {
+    "type": "session.compacted",
+    "data": {}
+   },
+   "$comment": "OpenCode announces compaction after the fact \u2014 the post moment, no deviation note needed"
+  },
+  "session_status_retry": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "session.status",
+     "properties": {
+      "sessionID": "s_fix_1",
+      "status": {
+       "type": "retry",
+       "attempt": 2,
+       "message": "rate limited",
+       "next": 9
+      }
+     }
+    }
+   },
+   "expected": {
+    "type": "progress.status",
+    "data": {},
+    "subject": "retry"
+   },
+   "$comment": "the retry message is gated redacted; the status type rides as the subject"
+  },
+  "session_error": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "session.error",
+     "properties": {
+      "sessionID": "s_fix_1",
+      "error": {
+       "name": "ApiError",
+       "data": {
+        "message": "upstream 500"
+       }
+      }
+     }
+    }
+   },
+   "expected": {
+    "type": "x.opencode.session.error",
+    "data": {
+     "type": "ApiError"
+    }
+   },
+   "$comment": "stays vendor-namespaced at error severity: OpenCode does not say whether the turn dies, and run.failed would assert exactly that (design record decision 4)"
+  },
+  "message_user": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "message.updated",
+     "properties": {
+      "info": {
+       "id": "msg_u1",
+       "sessionID": "s_fix_1",
+       "role": "user",
+       "time": {
+        "created": 3
+       },
+       "agent": "build",
+       "model": {
+        "providerID": "anthropic",
+        "modelID": "claude"
+       }
+      }
+     }
+    }
+   },
+   "expected": {
+    "type": "run.started",
+    "data": {
+     "trigger": "user"
+    }
+   },
+   "$comment": "the typed run-open discriminant (UserMessage.role); prompt text is NOT on this event (parts carry it) \u2014 nothing to gate"
+  },
+  "message_assistant": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "message.updated",
+     "properties": {
+      "info": {
+       "id": "msg_a1",
+       "sessionID": "s_fix_1",
+       "role": "assistant",
+       "parentID": "msg_u1",
+       "modelID": "claude",
+       "providerID": "anthropic",
+       "mode": "build",
+       "path": {
+        "cwd": "/p",
+        "root": "/p"
+       },
+       "cost": 0.01,
+       "time": {
+        "created": 4
+       },
+       "tokens": {
+        "input": 120,
+        "output": 40,
+        "reasoning": 0,
+        "cache": {
+         "read": 0,
+         "write": 0
+        }
+       }
+      }
+     }
+    }
+   },
+   "expected": {
+    "type": "x.opencode.message.updated",
+    "data": {
+     "role": "assistant",
+     "gen_ai.usage.input_tokens": 120,
+     "gen_ai.usage.output_tokens": 40
+    }
+   },
+   "$comment": "the model plane stays in the vendor namespace at debug severity; token counts are metadata metrics"
+  },
+  "permission_updated": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "permission.updated",
+     "properties": {
+      "id": "perm_1",
+      "type": "bash",
+      "pattern": "rm *",
+      "sessionID": "s_fix_1",
+      "messageID": "msg_u1",
+      "callID": "call_2",
+      "title": "rm -rf build",
+      "metadata": {},
+      "time": {
+       "created": 6
+      }
+     }
+    }
+   },
+   "expected": null,
+   "$comment": "deliberately nothing: the hold-open permission.ask hook is the first-class carrier of this moment"
+  },
+  "permission_replied": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "permission.replied",
+     "properties": {
+      "sessionID": "s_fix_1",
+      "permissionID": "perm_1",
+      "response": "reject"
+     }
+    }
+   },
+   "expected": {
+    "type": "attention.resolved",
+    "data": {
+     "resolution": "answered"
+    },
+    "subject": "perm_1"
+   },
+   "$comment": "a decision that settled outside the control loop (TUI-answered); the adapter suppresses this when its own loop already resolved the same vendor id \u2014 runtime state, smoke-pinned"
+  },
+  "todo_updated": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "todo.updated",
+     "properties": {
+      "sessionID": "s_fix_1",
+      "todos": [
+       {
+        "id": "td_1",
+        "content": "write the fix",
+        "status": "pending",
+        "priority": "high"
+       }
+      ]
+     }
+    }
+   },
+   "expected": null,
+   "$comment": "deliberately nothing: a snapshot, not a transition \u2014 see the todos block"
+  },
+  "file_edited": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "file.edited",
+     "properties": {
+      "file": "/home/user/proj/src/a.ts"
+     }
+    }
+   },
+   "expected": {
+    "type": "x.opencode.file.edited",
+    "data": {}
+   },
+   "$comment": "the path is gated redacted; nothing rides at the default ceiling"
+  },
+  "command_executed": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "command.executed",
+     "properties": {
+      "name": "test",
+      "sessionID": "s_fix_1",
+      "arguments": "--watch",
+      "messageID": "msg_u1"
+     }
+    }
+   },
+   "expected": {
+    "type": "x.opencode.command.executed",
+    "data": {
+     "name": "test"
+    }
+   },
+   "$comment": "arguments are gated redacted; the command name is metadata"
+  },
+  "server_connected": {
+   "input": {
+    "kind": "bus",
+    "event": {
+     "type": "server.connected",
+     "properties": {}
+    }
+   },
+   "expected": {
+    "type": "x.opencode.server.connected",
+    "data": {}
+   },
+   "$comment": "agent-scope machinery (no session on the event)"
+  },
+  "tool_before": {
+   "input": {
+    "kind": "tool.before",
+    "input": {
+     "tool": "bash",
+     "sessionID": "s_fix_1",
+     "callID": "call_1"
+    },
+    "output": {
+     "args": {
+      "command": "npm test"
+     }
+    }
+   },
+   "expected": {
+    "type": "tool.requested",
+    "data": {
+     "tool": {
+      "name": "bash",
+      "call_id": "call_1"
+     },
+     "args_digest": "9178ac939ad908d8fd89e97596cdc0e5"
+    },
+    "subject": "bash"
+   },
+   "$comment": "args ride as a digest at metadata, redacted object at redacted+; callID is the exact pairing key"
+  },
+  "tool_after": {
+   "input": {
+    "kind": "tool.after",
+    "input": {
+     "tool": "bash",
+     "sessionID": "s_fix_1",
+     "callID": "call_1",
+     "args": {
+      "command": "npm test"
+     }
+    },
+    "output": {
+     "title": "npm test",
+     "output": "ok 42 tests",
+     "metadata": {}
+    }
+   },
+   "expected": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "bash",
+      "call_id": "call_1"
+     },
+     "result_digest": "9623cdc86ee0e1f01e338bc35845417f"
+    },
+    "subject": "bash"
+   },
+   "$comment": "the typed hook payload has NO error surface \u2014 tool.completed always; failures arrive session-scoped as x.opencode.session.error (an honest deviation, documented in the adapter)"
+  },
+  "permission_ask": {
+   "input": {
+    "kind": "permission.ask",
+    "permission": {
+     "id": "perm_1",
+     "type": "bash",
+     "pattern": "rm *",
+     "sessionID": "s_fix_1",
+     "messageID": "msg_u1",
+     "callID": "call_2",
+     "title": "rm -rf build",
+     "metadata": {},
+     "time": {
+      "created": 6
+     }
+    }
+   },
+   "expected": {
+    "type": "attention.requested",
+    "data": {
+     "kind": "permission",
+     "prompt": "Permission requested: bash \u2014 rm -rf build",
+     "options": [
+      {
+       "id": "allow",
+       "label": "Allow"
+      },
+      {
+       "id": "deny",
+       "label": "Deny"
+      }
+     ],
+     "respond_via": [
+      "control"
+     ]
+    },
+    "subject": "bash"
+   },
+   "$comment": "at the default redacted attention ceiling the vendor title rides in the prompt (AEP-0003 \u00a79.2: metadata would synthesize from structure only); options are what the hold-open surface can actually deliver \u2014 answer free-text is consumer-visible on attention.answered but cannot reach OpenCode (output carries status only)"
+  }
+ },
+ "todos": {
+  "$comment": "Pure snapshot diff (diffTodos): new ids plan, transitions to completed complete; removals and other churn stay silent (payload minimalism \u2014 the registry deliberately has no snapshot type). Task content is redacted-gated: data is empty at the default metadata ceiling.",
+  "input": {
+   "prev": [
+    {
+     "id": "td_1",
+     "content": "write the fix",
+     "status": "pending",
+     "priority": "high"
+    },
+    {
+     "id": "td_2",
+     "content": "run the suite",
+     "status": "pending",
+     "priority": "medium"
+    }
+   ],
+   "next": [
+    {
+     "id": "td_1",
+     "content": "write the fix",
+     "status": "completed",
+     "priority": "high"
+    },
+    {
+     "id": "td_2",
+     "content": "run the suite",
+     "status": "in_progress",
+     "priority": "medium"
+    },
+    {
+     "id": "td_3",
+     "content": "ship it",
+     "status": "completed",
+     "priority": "low"
+    }
+   ]
+  },
+  "expected": [
+   {
+    "type": "progress.task.completed",
+    "data": {},
+    "subject": "td_1"
+   },
+   {
+    "type": "progress.task.planned",
+    "data": {},
+    "subject": "td_3"
+   },
+   {
+    "type": "progress.task.completed",
+    "data": {},
+    "subject": "td_3"
+   }
+  ]
+ },
+ "fallback": {
+  "input": {
+   "kind": "bus",
+   "event": {
+    "type": "some.future.event",
+    "properties": {
+     "sessionID": "s_fix_1"
+    }
+   }
+  },
+  "expected": {
+   "type": "x.opencode.some.future.event",
+   "data": {}
+  }
+ },
+ "sse_modes": {
+  "$comment": "The OpenCode SSE channel (the design record's SSE bridge section; the OTel-inbound mode discipline). For every bus moment above: companion (default \u2014 a plugin adapter may also observe and is the SOLE core-type authority) emits ONLY the channel-visible x.opencode.* family, ZERO core types (core-mapped and adapter-suppressed moments carry as x.opencode.<bus type> with empty data; already-vendor moments keep their mapped shape); primary (SSE-only deployments) emits the full bus mapping with the read-only-channel override: permission.updated -> attention.requested WITHOUT options or respond_via (nothing can answer through this channel \u2014 the REST actuator stays a design note), and todo.updated stays null (the receiver drives the same pinned diffTodos). Checked by run.js against the reference mode-policy module and by run.py as wire facts.",
+  "modes": {
+   "session_created": {
+    "companion": {
+     "type": "x.opencode.session.created",
+     "data": {}
+    },
+    "primary": {
+     "type": "session.started",
+     "data": {
+      "client": {
+       "name": "opencode",
+       "version": "1.17.18"
+      }
+     }
+    }
+   },
+   "session_created_child": {
+    "companion": {
+     "type": "x.opencode.session.created",
+     "data": {}
+    },
+    "primary": {
+     "type": "session.started",
+     "data": {
+      "client": {
+       "name": "opencode",
+       "version": "1.17.18"
+      },
+      "parent": {
+       "session": "s_fix_1"
+      }
+     }
+    }
+   },
+   "session_deleted": {
+    "companion": {
+     "type": "x.opencode.session.deleted",
+     "data": {}
+    },
+    "primary": {
+     "type": "session.ended",
+     "data": {
+      "reason": "normal"
+     }
+    }
+   },
+   "session_idle": {
+    "companion": {
+     "type": "x.opencode.session.idle",
+     "data": {}
+    },
+    "primary": {
+     "type": "run.finished",
+     "data": {}
+    }
+   },
+   "session_compacted": {
+    "companion": {
+     "type": "x.opencode.session.compacted",
+     "data": {}
+    },
+    "primary": {
+     "type": "session.compacted",
+     "data": {}
+    }
+   },
+   "session_status_retry": {
+    "companion": {
+     "type": "x.opencode.session.status",
+     "data": {}
+    },
+    "primary": {
+     "type": "progress.status",
+     "data": {},
+     "subject": "retry"
+    }
+   },
+   "session_error": {
+    "companion": {
+     "type": "x.opencode.session.error",
+     "data": {
+      "type": "ApiError"
+     }
+    },
+    "primary": {
+     "type": "x.opencode.session.error",
+     "data": {
+      "type": "ApiError"
+     }
+    }
+   },
+   "message_user": {
+    "companion": {
+     "type": "x.opencode.message.updated",
+     "data": {}
+    },
+    "primary": {
+     "type": "run.started",
+     "data": {
+      "trigger": "user"
+     }
+    }
+   },
+   "message_assistant": {
+    "companion": {
+     "type": "x.opencode.message.updated",
+     "data": {
+      "role": "assistant",
+      "gen_ai.usage.input_tokens": 120,
+      "gen_ai.usage.output_tokens": 40
+     }
+    },
+    "primary": {
+     "type": "x.opencode.message.updated",
+     "data": {
+      "role": "assistant",
+      "gen_ai.usage.input_tokens": 120,
+      "gen_ai.usage.output_tokens": 40
+     }
+    }
+   },
+   "permission_updated": {
+    "companion": {
+     "type": "x.opencode.permission.updated",
+     "data": {}
+    },
+    "primary": {
+     "type": "attention.requested",
+     "data": {
+      "kind": "permission",
+      "prompt": "Permission requested: bash \u2014 rm -rf build"
+     },
+     "subject": "bash"
+    }
+   },
+   "permission_replied": {
+    "companion": {
+     "type": "x.opencode.permission.replied",
+     "data": {}
+    },
+    "primary": {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "answered"
+     },
+     "subject": "perm_1"
+    }
+   },
+   "todo_updated": {
+    "companion": {
+     "type": "x.opencode.todo.updated",
+     "data": {}
+    },
+    "primary": null
+   },
+   "file_edited": {
+    "companion": {
+     "type": "x.opencode.file.edited",
+     "data": {}
+    },
+    "primary": {
+     "type": "x.opencode.file.edited",
+     "data": {}
+    }
+   },
+   "command_executed": {
+    "companion": {
+     "type": "x.opencode.command.executed",
+     "data": {
+      "name": "test"
+     }
+    },
+    "primary": {
+     "type": "x.opencode.command.executed",
+     "data": {
+      "name": "test"
+     }
+    }
+   },
+   "server_connected": {
+    "companion": {
+     "type": "x.opencode.server.connected",
+     "data": {}
+    },
+    "primary": {
+     "type": "x.opencode.server.connected",
+     "data": {}
+    }
+   }
+  }
+ }
+}

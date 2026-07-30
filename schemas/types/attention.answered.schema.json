@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/attention.answered.schema.json",
+  "title": "AEP payload: attention.answered",
+  "type": "object",
+  "properties": {
+    "answer": {
+      "type": "object",
+      "properties": {
+        "option": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "text": {
+          "type": "string",
+          "x-aep-capture": "redacted"
+        },
+        "values": {
+          "type": "object",
+          "x-aep-capture": "metadata",
+          "$comment": "present only answering a kind=form request (AEP-0006): flat map of field_spec.id -> answer. Per-key gating is type-dependent and cannot be expressed schema-mechanically (it depends on the referenced field_spec.type): a string-typed field's value, and an `other` free-text value on a select field, follow answer.text's rule (redacted minimum, never metadata); number/boolean/closed-select values are structural and stay metadata. Enforced by emitters and `aep validate`, plus the conformance/fixtures/capture-gating/ corpus"
+        }
+      },
+      "x-aep-capture": "metadata"
+    },
+    "by": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "via": {
+      "enum": [
+        "control",
+        "oob"
+      ],
+      "x-aep-capture": "metadata"
+    }
+  },
+  "required": [
+    "answer"
+  ]
+}

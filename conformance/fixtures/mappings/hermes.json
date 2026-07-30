@@ -1,0 +1,926 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable mapping fixture for the Hermes Agent table (the SHELL-hook generation). SOURCE PROVENANCE, stated: the vendor publishes no typed schema artifact — payload shapes were read from the repository at tag v2026.7.7.2 (design record: docs/components/adapter-hermes-design.md, file:line cited) and every payload carries telemetry_schema_version \"hermes.observer.v1\" in extra (pinned here as the drift sentinel; a different value is the re-verify trigger). Each entry pins the pure envelope->events mapping at the adapter default posture (capture metadata; attention.* redacted): input is one stdin envelope {hook_event_name, tool_name, tool_input, session_id, cwd, extra}; expected is an ARRAY of {type, data, subject?}. Envelope identity (session_id -> session; the REAL per-turn turn_id -> run, stamped by the daemon; tool_call_id pairing; approval pre/post pairing by session|pattern_key) is runtime state, pinned by the reference adapter smoke. OBSERVE-ONLY: the shim never blocks and never injects context. The vendor approval gate is observed read-only — since AEP-0008 its card carries the vendor decision menu as options data and declares respond_via [oob]; answers ride via oob. The clarify ask-the-user tool additionally maps a FORM OVERLAY (AEP-0006 kind form, one field, respond_via [oob]) beside its pinned tool events: the tool trio never moves, the pre card mirrors the vendor entry-point choice normalization, the post result classifies answered (a picked choice = its structural 1-based id; Other = redacted-gated free text) / timeout (the vendor return-contract sentinels) / dismissed (cancel, undeliverable, empty, blocked, error).",
+ "identity": {
+  "session_from": "session_id (the serializer falls back to parent_session_id on subagent hooks — delegation lands on the parent). APPROVAL EXCEPTION, source-pinned: the approval fire sites pass no session kwarg, so pre_approval_request / post_approval_response ALWAYS carry session_id \"\" — identity rides only as extra.session_key (CLI surface: equals the session id; gateway surface: a platform-scoped key). The adapter joins session_key against sessions it has already seen and otherwise degrades to the unknown lane (runtime state, pinned by the reference adapter smoke).",
+  "run_from": "extra.turn_id (REAL per-turn id, verbatim — no synthesis; pre_llm_call opens, on_session_end closes per turn)",
+  "$comment": "tool_call_id pairs the tool trio; the approval pre/post pair is keyed session|pattern_key in the daemon."
+ },
+ "hooks": {
+  "on_session_start": {
+   "input": {
+    "hook_event_name": "on_session_start",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "model": "hermes-4",
+     "platform": "cli"
+    }
+   },
+   "expected": [
+    {
+     "type": "session.started",
+     "data": {
+      "client": {
+       "name": "hermes"
+      }
+     }
+    }
+   ]
+  },
+  "pre_llm_call": {
+   "input": {
+    "hook_event_name": "pre_llm_call",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "task_id": "t1",
+     "user_message": "fix the failing build",
+     "is_first_turn": true,
+     "model": "hermes-4",
+     "platform": "cli"
+    }
+   },
+   "expected": [
+    {
+     "type": "run.started",
+     "data": {
+      "trigger": "user",
+      "message_digest": "fcaa85fdd55703139ec7363834c4063a"
+     }
+    }
+   ],
+   "$comment": "opens the run; extra.turn_id is a REAL per-turn id the daemon stamps verbatim as the AEP run — no synthesis; the user message is content: digest at metadata, redacted text at redacted+"
+  },
+  "pre_tool_call": {
+   "input": {
+    "hook_event_name": "pre_tool_call",
+    "tool_name": "terminal",
+    "tool_input": {
+     "command": "npm test"
+    },
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_1",
+     "turn_id": "s_fix_1:t1:aaaa1111"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "terminal",
+       "call_id": "tc_1"
+      },
+      "args_digest": "9178ac939ad908d8fd89e97596cdc0e5"
+     },
+     "subject": "terminal"
+    }
+   ]
+  },
+  "post_tool_call_ok": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "terminal",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "result": "ok 42 tests",
+     "duration_ms": 812,
+     "status": "ok"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "terminal",
+       "call_id": "tc_1"
+      },
+      "duration_ms": 812,
+      "result_digest": "9623cdc86ee0e1f01e338bc35845417f"
+     },
+     "subject": "terminal"
+    }
+   ],
+   "$comment": "status ok -> tool.completed with duration + result digest"
+  },
+  "post_tool_call_error": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "read_file",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_2",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "status": "error",
+     "error_type": "FileNotFound",
+     "error_message": "no such file",
+     "duration_ms": 4
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.failed",
+     "data": {
+      "tool": {
+       "name": "read_file",
+       "call_id": "tc_2"
+      },
+      "duration_ms": 4,
+      "error": {
+       "type": "FileNotFound"
+      }
+     },
+     "subject": "read_file"
+    }
+   ],
+   "$comment": "status error -> tool.failed with the typed error name; message redacted-gated"
+  },
+  "post_tool_call_blocked": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "terminal",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_3",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "status": "blocked",
+     "error_message": "blocked by policy hook",
+     "duration_ms": 1
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.denied",
+     "data": {
+      "tool": {
+       "name": "terminal",
+       "call_id": "tc_3"
+      },
+      "duration_ms": 1,
+      "by": "policy"
+     },
+     "subject": "terminal"
+    }
+   ],
+   "$comment": "status blocked -> tool.DENIED by policy (a blocking hook, no human loop) — the first live surface onto tool.denied; the block message rides as the rule at redacted+"
+  },
+  "pre_approval_request": {
+   "input": {
+    "hook_event_name": "pre_approval_request",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "command": "sudo make install",
+     "pattern_key": "terminal:sudo",
+     "session_key": "s_fix_1",
+     "surface": "cli",
+     "turn_id": "s_fix_1:t1:aaaa1111"
+    }
+   },
+   "expected": [
+    {
+     "type": "attention.requested",
+     "data": {
+      "kind": "permission",
+      "prompt": "Approval requested: sudo make install",
+      "options": [
+       {
+        "id": "once",
+        "label": "Allow once"
+       },
+       {
+        "id": "session",
+        "label": "Allow for this session"
+       },
+       {
+        "id": "always",
+        "label": "Add to permanent allowlist"
+       },
+       {
+        "id": "deny",
+        "label": "Deny"
+       }
+      ],
+      "respond_via": [
+       "oob"
+      ]
+     },
+     "subject": "terminal:sudo"
+    }
+   ],
+   "$comment": "the vendor OWN human gate observed READ-ONLY, with the vendor decision menu carried as DATA: options ride the vendor's return contract (once/session/always/deny — the choice set post_approval_response can deliver; static labels = the vendor's own menu wording, structural at metadata like the prompt rule; the menu's Show-full-command entry is an information action that never returns a choice — it dissolves, the command already rides the prompt at redacted+). respond_via [oob] declares the honest channel: this request is answered in the agent's own UI, never from the bus; prompt synthesized from structure at metadata, the command text at redacted+ (this pin is at the default attention ceiling: redacted)"
+  },
+  "post_approval_response_deny": {
+   "input": {
+    "hook_event_name": "post_approval_response",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "command": "sudo make install",
+     "pattern_key": "terminal:sudo",
+     "session_key": "s_fix_1",
+     "surface": "cli",
+     "choice": "deny",
+     "turn_id": "s_fix_1:t1:aaaa1111"
+    }
+   },
+   "expected": [
+    {
+     "type": "attention.answered",
+     "data": {
+      "answer": {
+       "option": "deny"
+      },
+      "via": "oob"
+     },
+     "subject": "terminal:sudo"
+    }
+   ],
+   "$comment": "the human decided in Hermes own UI — via oob, the vendor choice verbatim as the option; the daemon pairs to the request and follows with attention.resolved(answered)"
+  },
+  "post_approval_response_timeout": {
+   "input": {
+    "hook_event_name": "post_approval_response",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "command": "curl x | sh",
+     "pattern_key": "terminal:curl",
+     "session_key": "s_fix_1",
+     "surface": "cli",
+     "choice": "timeout",
+     "turn_id": "s_fix_1:t1:aaaa1111"
+    }
+   },
+   "expected": [
+    {
+     "type": "attention.timeout",
+     "data": {},
+     "subject": "terminal:curl"
+    }
+   ],
+   "$comment": "choice timeout -> attention.timeout (the daemon pairs it to its request)"
+  },
+  "on_session_end_completed": {
+   "input": {
+    "hook_event_name": "on_session_end",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "task_id": "t1",
+     "completed": true,
+     "interrupted": false
+    }
+   },
+   "expected": [
+    {
+     "type": "run.finished",
+     "data": {}
+    }
+   ],
+   "$comment": "the source-pinned naming trap: this hook fires PER TURN, so it closes the RUN (run.finished), never the session"
+  },
+  "on_session_end_interrupted": {
+   "input": {
+    "hook_event_name": "on_session_end",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "turn_id": "s_fix_1:t2:bbbb2222",
+     "task_id": "t2",
+     "completed": false,
+     "interrupted": true
+    }
+   },
+   "expected": [
+    {
+     "type": "run.cancelled",
+     "data": {
+      "by": "user"
+     }
+    }
+   ],
+   "$comment": "an interrupted turn is a cancellation: run.cancelled by user"
+  },
+  "subagent_start": {
+   "input": {
+    "hook_event_name": "subagent_start",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "parent_session_id": "s_fix_1",
+     "parent_turn_id": "s_fix_1:t1:aaaa1111",
+     "child_session_id": "s_fix_1_sub",
+     "child_role": "researcher",
+     "child_goal": "find the flaky test"
+    }
+   },
+   "expected": [
+    {
+     "type": "delegation.subagent.started",
+     "data": {
+      "child": {
+       "session": "s_fix_1_sub"
+      },
+      "role": "researcher"
+     },
+     "subject": "s_fix_1_sub"
+    }
+   ],
+   "$comment": "the envelope session_id falls back to parent_session_id — the delegation pair lands on the PARENT session; the child session id is the subject; the goal is content, redacted-gated"
+  },
+  "subagent_stop": {
+   "input": {
+    "hook_event_name": "subagent_stop",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "parent_session_id": "s_fix_1",
+     "parent_turn_id": "s_fix_1:t1:aaaa1111",
+     "child_session_id": "s_fix_1_sub",
+     "child_role": "researcher",
+     "child_status": "ok",
+     "child_summary": "found it",
+     "duration_ms": 5100
+    }
+   },
+   "expected": [
+    {
+     "type": "delegation.subagent.stopped",
+     "data": {
+      "child": {
+       "session": "s_fix_1_sub"
+      },
+      "status": "ok",
+      "duration_ms": 5100
+     },
+     "subject": "s_fix_1_sub"
+    }
+   ]
+  },
+  "api_request_error": {
+   "input": {
+    "hook_event_name": "api_request_error",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "turn_id": "s_fix_1:t2:bbbb2222",
+     "status_code": 429,
+     "retry_count": 3,
+     "reason": "rate_limited",
+     "error": {
+      "type": "RateLimit",
+      "message": "slow down"
+     }
+    }
+   },
+   "expected": [
+    {
+     "type": "x.hermes.api.error",
+     "data": {
+      "status_code": 429,
+      "retry_count": 3,
+      "reason": "rate_limited"
+     }
+    }
+   ],
+   "$comment": "the one registered API-plane hook: the error FACT rides vendor-namespaced at error severity; message redacted-gated"
+  },
+  "on_session_finalize": {
+   "input": {
+    "hook_event_name": "on_session_finalize",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "reason": "shutdown",
+     "platform": "cli"
+    }
+   },
+   "expected": [
+    {
+     "type": "session.ended",
+     "data": {
+      "reason": "normal"
+     }
+    }
+   ],
+   "$comment": "THE session end — every finalize path carries the DYING session's id (explicit /new//reset captures it pre-rotation; shutdown and idle-expiry pass the then-current id)"
+  },
+  "on_session_reset": {
+   "input": {
+    "hook_event_name": "on_session_reset",
+    "tool_name": null,
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "reason": "new_session",
+     "platform": "cli"
+    }
+   },
+   "expected": [
+    {
+     "type": "x.hermes.session.reset",
+     "data": {
+      "reason": "new_session"
+     }
+    }
+   ],
+   "$comment": "NOT a session end: the vendor mints a NEW session id on /new//reset and fires this hook AFTER the swap with the SUCCESSOR's id (cli.py new_session() rotates then notifies; the gateway passes new_session_id; finalize already ended the predecessor) — mapping it to session.ended would end a session at its birth, so it rides the vendor plane"
+  },
+  "pre_tool_call (clarify: the form overlay, vendor choice normalization)": {
+   "input": {
+    "hook_event_name": "pre_tool_call",
+    "tool_name": "clarify",
+    "tool_input": {
+     "question": "Which deployment target?",
+     "choices": [
+      " staging ",
+      {
+       "description": "production"
+      },
+      "",
+      "staging-eu",
+      "extra-5th",
+      "extra-6th"
+     ]
+    },
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "args_digest": "bc093e95015241bcbb7e511880e8a5b1"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.requested",
+     "data": {
+      "kind": "form",
+      "prompt": "hermes asks a question",
+      "fields": [
+       {
+        "id": "1",
+        "type": "select",
+        "label": "Which deployment target?",
+        "required": true,
+        "other": true,
+        "choices": [
+         {
+          "id": "1",
+          "label": "staging"
+         },
+         {
+          "id": "2",
+          "label": "production"
+         },
+         {
+          "id": "3",
+          "label": "staging-eu"
+         },
+         {
+          "id": "4",
+          "label": "extra-5th"
+         }
+        ]
+       }
+      ],
+      "respond_via": [
+       "oob"
+      ]
+     },
+     "subject": "tc_c1"
+    }
+   ]
+  },
+  "pre_tool_call (clarify: open-ended)": {
+   "input": {
+    "hook_event_name": "pre_tool_call",
+    "tool_name": "clarify",
+    "tool_input": {
+     "question": "Anything else?"
+    },
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c2",
+     "turn_id": "s_fix_1:t1:aaaa1111"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c2"
+      },
+      "args_digest": "b67719229b314e0945fd73c4831d3ef6"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.requested",
+     "data": {
+      "kind": "form",
+      "prompt": "hermes asks a question",
+      "fields": [
+       {
+        "id": "1",
+        "type": "string",
+        "label": "Anything else?",
+        "required": true
+       }
+      ],
+      "respond_via": [
+       "oob"
+      ]
+     },
+     "subject": "tc_c2"
+    }
+   ]
+  },
+  "pre_tool_call (clarify: question-less, no card)": {
+   "input": {
+    "hook_event_name": "pre_tool_call",
+    "tool_name": "clarify",
+    "tool_input": {},
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c3",
+     "turn_id": "s_fix_1:t1:aaaa1111"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.requested",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c3"
+      },
+      "args_digest": "44136fa355b3678a1146ad16f7e8649e"
+     },
+     "subject": "clarify"
+    }
+   ]
+  },
+  "post_tool_call (clarify: a picked choice is its structural id)": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "clarify",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "duration_ms": 2100,
+     "status": "ok",
+     "result": "{\"question\":\"Which deployment target?\",\"choices_offered\":[\"staging\",\"production\",\"staging-eu\",\"extra-5th\"],\"user_response\":\"staging-eu\"}"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "duration_ms": 2100,
+      "result_digest": "8fdc494064da3ae4dca6ffb748fb362a"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.answered",
+     "data": {
+      "answer": {
+       "values": {
+        "1": "3"
+       }
+      },
+      "via": "oob"
+     },
+     "subject": "tc_c1"
+    }
+   ]
+  },
+  "post_tool_call (clarify: the Other path is free text, redacted-gated)": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "clarify",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "duration_ms": 900,
+     "status": "ok",
+     "result": "{\"question\":\"Ship now?\",\"choices_offered\":[\"yes\",\"no\"],\"user_response\":\"ship them both\"}"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "duration_ms": 900,
+      "result_digest": "b9f0e44f526afd6196b510206a3f046a"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.answered",
+     "data": {
+      "answer": {
+       "values": {
+        "1": "ship them both"
+       }
+      },
+      "via": "oob"
+     },
+     "subject": "tc_c1"
+    }
+   ]
+  },
+  "post_tool_call (clarify: the CLI timeout sentinel)": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "clarify",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "duration_ms": 120000,
+     "status": "ok",
+     "result": "{\"question\":\"Q?\",\"choices_offered\":[\"a\",\"b\"],\"user_response\":\"The user did not provide a response within the time limit. Use your best judgement to make the choice and proceed.\"}"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "duration_ms": 120000,
+      "result_digest": "2bc40e9d50873f4adccee90fc95b6dd4"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.timeout",
+     "data": {},
+     "subject": "tc_c1"
+    }
+   ]
+  },
+  "post_tool_call (clarify: the gateway timeout sentinel)": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "clarify",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "duration_ms": 600000,
+     "status": "ok",
+     "result": "{\"question\":\"Q?\",\"choices_offered\":[\"a\",\"b\"],\"user_response\":\"[user did not respond within 10m]\"}"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "duration_ms": 600000,
+      "result_digest": "5f9c207f6222443d9791f770c142e090"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.timeout",
+     "data": {},
+     "subject": "tc_c1"
+    }
+   ]
+  },
+  "post_tool_call (clarify: cancelled by the user, dismissed)": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "clarify",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "duration_ms": 3000,
+     "status": "ok",
+     "result": "{\"question\":\"Q?\",\"choices_offered\":[\"a\",\"b\"],\"user_response\":\"The user cancelled. Use your best judgement to proceed.\"}"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "duration_ms": 3000,
+      "result_digest": "7b9ef9a0bd3a6e292b057211c8c2e359"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "dismissed"
+     },
+     "subject": "tc_c1"
+    }
+   ]
+  },
+  "post_tool_call (clarify: prompt undeliverable, dismissed)": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "clarify",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "duration_ms": 15000,
+     "status": "ok",
+     "result": "{\"question\":\"Q?\",\"choices_offered\":[\"a\",\"b\"],\"user_response\":\"[clarify prompt could not be delivered]\"}"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.completed",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "duration_ms": 15000,
+      "result_digest": "317089b468f02dbcc614c743813565b5"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "dismissed"
+     },
+     "subject": "tc_c1"
+    }
+   ]
+  },
+  "post_tool_call (clarify: blocked before the ask, dismissed beside the pinned denial)": {
+   "input": {
+    "hook_event_name": "post_tool_call",
+    "tool_name": "clarify",
+    "tool_input": null,
+    "session_id": "s_fix_1",
+    "cwd": "/home/user/proj",
+    "extra": {
+     "telemetry_schema_version": "hermes.observer.v1",
+     "tool_call_id": "tc_c1",
+     "turn_id": "s_fix_1:t1:aaaa1111",
+     "duration_ms": 1,
+     "status": "blocked",
+     "error_message": "blocked by policy hook"
+    }
+   },
+   "expected": [
+    {
+     "type": "tool.denied",
+     "data": {
+      "tool": {
+       "name": "clarify",
+       "call_id": "tc_c1"
+      },
+      "duration_ms": 1,
+      "by": "policy"
+     },
+     "subject": "clarify"
+    },
+    {
+     "type": "attention.resolved",
+     "data": {
+      "resolution": "dismissed"
+     },
+     "subject": "tc_c1"
+    }
+   ]
+  }
+ },
+ "fallback": {
+  "input": {
+   "hook_event_name": "pre_verify",
+   "tool_name": null,
+   "tool_input": null,
+   "session_id": "s_fix_1",
+   "cwd": "/home/user/proj",
+   "extra": {
+    "telemetry_schema_version": "hermes.observer.v1",
+    "turn_id": "s_fix_1:t2:bbbb2222"
+   }
+  },
+  "expected": [
+   {
+    "type": "x.hermes.pre.verify",
+    "data": {}
+   }
+  ]
+ }
+}

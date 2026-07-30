@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/attention.requested.schema.json",
+  "title": "AEP payload: attention.requested",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "enum": [
+        "permission",
+        "input",
+        "auth",
+        "review",
+        "form",
+        "other"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "prompt": {
+      "type": "string",
+      "x-aep-capture": "metadata",
+      "$comment": "metadata-gated by exception: at capture=metadata the content MUST be synthesized from structural metadata only (AEP-0003 §9.2); at redacted+ it may carry hook-provided text passed through the §9.4 pipeline"
+    },
+    "options": {
+      "type": "array",
+      "x-aep-capture": "metadata",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-aep-capture": "metadata"
+          },
+          "label": {
+            "type": "string",
+            "x-aep-capture": "metadata",
+            "$comment": "metadata-gated by exception, same rule as prompt (AEP-0006): at capture=metadata the label MUST be a structural placeholder (e.g. the option's 1-based index as a string), never model-generated content; at redacted+ it may carry the real label through the AEP-0003 §9.4 pipeline"
+          }
+        },
+        "x-aep-capture": "metadata",
+        "required": [
+          "id",
+          "label"
+        ]
+      }
+    },
+    "fields": {
+      "type": "array",
+      "x-aep-capture": "metadata",
+      "$comment": "present only when kind=form (AEP-0006): flat, typed multi-field request; each item is a field_spec (AEP-0002 §5.2)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-aep-capture": "metadata"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "number",
+              "boolean",
+              "select"
+            ],
+            "x-aep-capture": "metadata"
+          },
+          "label": {
+            "type": "string",
+            "x-aep-capture": "metadata",
+            "$comment": "metadata-gated by exception, same rule as prompt (AEP-0006): structural placeholder at capture=metadata, real content at redacted+ through the AEP-0003 §9.4 pipeline"
+          },
+          "required": {
+            "type": "boolean",
+            "x-aep-capture": "metadata"
+          },
+          "multi": {
+            "type": "boolean",
+            "x-aep-capture": "metadata",
+            "$comment": "only meaningful when type=select: multiple choices may be selected"
+          },
+          "other": {
+            "type": "boolean",
+            "x-aep-capture": "metadata",
+            "$comment": "type=select only: the responder MAY answer with free text instead of a choices[].id (AEP-0006 values gating rule)"
+          },
+          "choices": {
+            "type": "array",
+            "x-aep-capture": "metadata",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-aep-capture": "metadata"
+                },
+                "label": {
+                  "type": "string",
+                  "x-aep-capture": "metadata",
+                  "$comment": "metadata-gated by exception, same rule as prompt (AEP-0006): structural placeholder at capture=metadata, real content at redacted+"
+                }
+              },
+              "x-aep-capture": "metadata",
+              "required": [
+                "id",
+                "label"
+              ]
+            }
+          },
+          "min": {
+            "type": "number",
+            "x-aep-capture": "metadata"
+          },
+          "max": {
+            "type": "number",
+            "x-aep-capture": "metadata"
+          }
+        },
+        "x-aep-capture": "metadata",
+        "required": [
+          "id",
+          "type",
+          "label"
+        ],
+        "if": {
+          "properties": {
+            "type": {
+              "const": "select"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "then": {
+          "required": [
+            "choices"
+          ]
+        }
+      }
+    },
+    "expires_at": {
+      "type": "string",
+      "x-aep-capture": "metadata",
+      "format": "date-time"
+    },
+    "respond_via": {
+      "type": "array",
+      "x-aep-capture": "metadata",
+      "items": {
+        "enum": [
+          "control",
+          "oob"
+        ]
+      }
+    },
+    "context": {
+      "type": "object",
+      "x-aep-capture": "full"
+    }
+  },
+  "required": [
+    "kind",
+    "prompt"
+  ]
+}

@@ -1,0 +1,579 @@
+{
+ "$comment": "Reviewed capability record for the generated agents pages (docs/gen-agents.js). One entry per adopted source: twelve agent adapters + six inbound channels. Facts here restate, with pointers, what the component docs, design records, and vendor-surfaces.md already establish: every cell must be traceable to one of those. Fixture-pinned event coverage is NOT stored here: the generator derives it from conformance/fixtures/mappings/*.json so it cannot go stale. Edit this file (or the fixtures), then run `node docs/gen-agents.js`; CI fails if the committed pages drift.",
+ "sources": [
+  {
+   "id": "claude-code",
+   "name": "Claude Code",
+   "kind": "agent",
+   "channel": "hooks: native `http` type or `command` shim",
+   "port": 8377,
+   "impl": "adapter-claude-code",
+   "designRecord": null,
+   "fixture": "claude-code.json",
+   "fixturePinned": [
+    "attention.requested"
+   ],
+   "fixtureNote": "the fixture file pins the two structured-input (kind `form`) mappings at both capture ceilings; the remaining coverage below is documented at the component doc and validated live",
+   "validation": "live",
+   "documentedTypes": [
+    "session.started",
+    "session.ended",
+    "session.compacted",
+    "run.started",
+    "run.finished",
+    "run.failed",
+    "tool.requested",
+    "tool.completed",
+    "tool.failed",
+    "tool.denied",
+    "attention.requested",
+    "attention.answered",
+    "attention.resolved",
+    "attention.timeout",
+    "delegation.subagent.started",
+    "delegation.subagent.stopped",
+    "progress.status",
+    "progress.task.planned",
+    "progress.task.completed",
+    "agent.idle"
+   ],
+   "control": {
+    "accepts": [
+     "control.attention.respond"
+    ],
+    "optInAccepts": [
+     "`x.claude-code.control.instruct` (steering, `AEP_INSTRUCT=1`; see the [design record](/components/control-steering-design))"
+    ],
+    "answerable": [
+     "permission (typed text follows the AEP-0008 receiver rule: an option word counts as that option, other free text is a deny WITH the text as the hook message, the vendor's own custom-reply path)",
+     "form"
+    ],
+    "observedAttention": [],
+    "ackWindowMs": 10000,
+    "vendorCancel": null,
+    "toolDenied": "`PermissionDenied` hook → `tool.denied`"
+   },
+   "forms": "`AskUserQuestion` and MCP `Elicitation`/`ElicitationResult` → `attention.requested` kind `form` (AEP-0006), answered end to end",
+   "steering": "SHIPPED opt-in: `x.claude-code.control.instruct` queues text delivered as `additionalContext` on the next eligible hook reply, audited on the stream ([design record](/components/control-steering-design)); `updatedInput`/`updatedToolOutput` rewrites stay unused",
+   "headroom": "blockable task/teammate/config moments are captured as facts, never driven; `PermissionDenied.retry` deliberately unused"
+  },
+  {
+   "id": "codex",
+   "name": "Codex",
+   "kind": "agent",
+   "channel": "hooks: `command` shim",
+   "port": 8378,
+   "impl": "adapter-codex",
+   "designRecord": null,
+   "fixture": "codex.json",
+   "validation": "live",
+   "control": {
+    "accepts": [
+     "control.attention.respond"
+    ],
+    "optInAccepts": [
+     "`x.codex.control.instruct` (steering, `AEP_INSTRUCT=1`; see the [design record](/components/control-steering-design))"
+    ],
+    "answerable": [
+     "permission (typed text follows the AEP-0008 receiver rule: an option word counts as that option, other free text is a deny WITH the text as the decision message, the guidance path)"
+    ],
+    "observedAttention": [],
+    "ackWindowMs": 10000,
+    "vendorCancel": null,
+    "toolDenied": "on the OTel channel (`tool_decision` deny); see the OTel-inbound row"
+   },
+   "forms": null,
+   "steering": "SHIPPED opt-in: `x.codex.control.instruct` queues text delivered as `additionalContext` on the five documented moments (`SessionStart`, `SubagentStart`, `PreToolUse`, `PostToolUse`, `UserPromptSubmit`), audited on the stream ([design record](/components/control-steering-design)); no `SessionEnd` hook exists, so the session-end drop outcome has no Codex moment (recorded deviation); `PostToolUse` result replacement stays unused",
+   "headroom": "native OTel log export is the second channel, adopted through the OTel-inbound mapping"
+  },
+  {
+   "id": "gemini-cli",
+   "name": "Gemini CLI",
+   "kind": "agent",
+   "channel": "hooks: `command` shim",
+   "port": 8379,
+   "impl": "adapter-gemini-cli",
+   "designRecord": null,
+   "fixture": "gemini-cli.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "answerable": [],
+    "observedAttention": [],
+    "ackWindowMs": null,
+    "vendorCancel": null,
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "`BeforeAgent`/`AfterTool` context injection; `BeforeModel` prompt/model mutation (automation-side hooks, out of the mapped scope)",
+   "headroom": "no human-in-the-loop hook exists (`Notification` can neither grant nor deny): a vendor ceiling, so observe-only is the honest posture"
+  },
+  {
+   "id": "qwen-code",
+   "name": "Qwen Code",
+   "kind": "agent",
+   "channel": "hooks: native `http` type (shimless) or `command` shim",
+   "port": 8380,
+   "impl": "adapter-qwen-code",
+   "designRecord": null,
+   "fixture": "qwen-code.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [
+     "control.attention.respond"
+    ],
+    "optInAccepts": [
+     "`x.qwen-code.control.instruct` (steering, `AEP_INSTRUCT=1`; see the [design record](/components/control-steering-design))"
+    ],
+    "answerable": [
+     "permission (typed text follows the AEP-0008 receiver rule: an option word counts as that option, other free text is a deny WITH the text as the decision message, the vendor's guidance path)"
+    ],
+    "observedAttention": [],
+    "ackWindowMs": 10000,
+    "vendorCancel": null,
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "SHIPPED opt-in: `x.qwen-code.control.instruct` queues text delivered as `additionalContext` on the seven documented moments (`SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`, `SubagentStart`, `PreCompact`), audited on the stream with the session-end drop ([design record](/components/control-steering-design)); the async `command`-hook `systemMessage` surface stays deliberately unused",
+   "headroom": "a `PermissionRequest` `interrupt` output field and a two-phase todo-hook structure are documented vendor-side and unmapped"
+  },
+  {
+   "id": "vscode",
+   "name": "VS Code agent (Copilot)",
+   "kind": "agent",
+   "channel": "agent hooks (Preview): `command` shim",
+   "port": 8381,
+   "impl": "adapter-vscode",
+   "designRecord": null,
+   "fixture": "vscode.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (the held PreToolUse permission gate: `AEP_VSCODE_CONTROL=1`, scoped by `AEP_VSCODE_GATE_TOOLS`; the vendor's own allow/deny/ask decision surface; see the adapter README)",
+     "`x.vscode.control.instruct` (steering: `AEP_INSTRUCT=1`; queued text rides `hookSpecificOutput.additionalContext` on the next eligible hook reply, five source-settled moments; see the steering design record)"
+    ],
+    "answerable": [
+     "permission (control opt-in: the held PreToolUse gate; an ask answer escalates to VS Code's own user-approval flow; typed text follows the AEP-0008 receiver rule: an option word incl. `ask` counts as that option, other free text denies with the text as the rendered reason)"
+    ],
+    "observedAttention": [],
+    "ackWindowMs": 10000,
+    "vendorCancel": null,
+    "toolDenied": "a commanded operator deny lands `tool.denied` `by: policy` cause-linked to the answer (hook denies are the vendor's hooks-policy plane; no further hook fires for the blocked call)"
+   },
+   "forms": null,
+   "steering": "SHIPPED opt-in: `x.vscode.control.instruct` queues text delivered as `additionalContext` on the five source-settled moments (`SessionStart`, `UserPromptSubmit`, `SubagentStart`, `PreToolUse`, `PostToolUse` (the last docs-silent but typed AND consumed, types over prose); `PreCompact` excluded, no output surface), audited on the stream ([design record](/components/control-steering-design)); no `SessionEnd` exists on this target, so there is no session-end drop moment (the Codex deviation); a held PreToolUse reply carries the permission decision, never steering",
+   "headroom": "the opt-in OTel channel's LogRecord family is ADOPTED (the OTel-inbound sidecar's `--vendor vscode` profile, fixture `vscode-otel.json`: tool-failure visibility the hook surface cannot carry); the richer `invoke_agent`/`execute_tool` span channel is recorded headroom (a new receiver message shape); `updatedInput` rewrite stays deliberately unused; PostToolUse is success-only and the VSCode hook target has no SessionEnd; end visibility waits on the vendor (agent hooks are Preview)"
+  },
+  {
+   "id": "kimi-code",
+   "name": "Kimi Code CLI",
+   "kind": "agent",
+   "channel": "external hooks: `command` shim (`[[hooks]]` in the ONE global config.toml; strict four-field schema, no per-project hook file)",
+   "port": 8398,
+   "impl": "adapter-kimi-code",
+   "designRecord": "/components/adapter-kimi-code-design",
+   "fixture": "kimi-code.json",
+   "validation": "live",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (the held PreToolUse permission gate: `AEP_KIMI_CONTROL=1`, scoped by `AEP_KIMI_GATE_TOOLS`; the vendor decision surface is BINARY allow/deny: an allow is \"no hook objection\", the vendor's own permission flow still runs downstream; see the adapter README)",
+     "`x.kimi-code.control.instruct` (steering: `AEP_INSTRUCT=1`; queued text rides `{message}` on the next `UserPromptSubmit` reply (the vendor's one context-accepting reply surface) and `SessionEnd` drops leftovers; see the steering design record)"
+    ],
+    "answerable": [
+     "permission (control opt-in: the held PreToolUse gate, binary allow/deny; typed text follows the AEP-0008 receiver rule: an option word counts as that option, other free text denies with the text as the rendered reason)"
+    ],
+    "observedAttention": [
+     "permission (always on; the vendor's own TUI approval prompt observed as an out-of-band pair: `PermissionRequest` opens the request with no options claimed, `PermissionResult` records the human's answer, a rejection lands `tool.denied` `by: runtime`)"
+    ],
+    "ackWindowMs": 10000,
+    "vendorCancel": "the dedicated `Interrupt` hook IS the vendor's own Esc moment (fired only for reason \"cancelled\"): `run.cancelled` `by: user` with no drain heuristic on the happy path; a run left open drains at the next prompt or at `SessionEnd`",
+    "toolDenied": "a commanded operator deny lands `tool.denied` `by: policy` cause-linked to the answer (the vendor renders the structured deny reason in the TUI); a vendor-side human rejection lands `tool.denied` `by: runtime` cause-linked to the oob answer"
+   },
+   "forms": null,
+   "steering": "SHIPPED opt-in: `x.kimi-code.control.instruct` queues text delivered as `{message}` on the next `UserPromptSubmit` reply; the vendor wraps hook stdout as a hook_result block appended to context, and that is its ONE context-accepting reply surface (every other event's stdout is display-only); `SessionEnd` EXISTS here, so leftovers drop with reason \"session-ended\" (the Claude Code rule), audited on the stream",
+   "headroom": "live-validated (the five-beat guide run, incl. the permission pair and both opt-in controls). The kap-server control plane is BUILT as the Kimi web channel (bridge-kimi-code-web; see its own card). Two further machine surfaces stay recorded, deliberately unbuilt: native ACP (`kimi acp`, protocol v1; observable TODAY through the ACP bridge with zero code) and the append-live `wire.jsonl` session records. The vendor ships weekly: the 16-event enum, the strict config schema, and the kap wire vocabulary are standing re-verify surfaces; a vendor-side config rewrite (the web UI settings save serializes config.toml) STRIPS the aep-setup fence comments; the writer then degrades to a presence check (no duplicate hooks, but fence-refresh stops working until the fence is re-landed)."
+  },
+  {
+   "id": "opencode",
+   "name": "OpenCode",
+   "kind": "agent",
+   "channel": "plugin: runs inside the agent's Bun runtime",
+   "port": 8390,
+   "impl": "adapter-opencode",
+   "designRecord": "/components/adapter-opencode-design",
+   "fixture": "opencode.json",
+   "fixtureScope": {
+    "exclude": [
+     "sse_modes"
+    ]
+   },
+   "validation": "fixture",
+   "control": {
+    "accepts": [
+     "control.attention.respond"
+    ],
+    "answerable": [
+     "permission (typed text follows the AEP-0008 receiver rule: an option word counts as that option; unmatched free text applies the refusing status; the hook output carries status only, so guidance stays stream-visible)"
+    ],
+    "observedAttention": [],
+    "ackWindowMs": 10000,
+    "vendorCancel": null,
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "`chat.params`/`chat.headers`/`shell.env` mutation hooks exist and are deliberately unregistered; the server REST API can answer permissions out of band",
+   "headroom": "`tool.execute.before` can block by throwing (unused); a typed v2 question/permission event family exists in the published SDK but is not yet plugin-exposed"
+  },
+  {
+   "id": "kilocode",
+   "name": "Kilo Code",
+   "kind": "agent",
+   "channel": "plugin: same shape as OpenCode (verified fork; runtime DIVERGED from the upstream at from 7.4.6)",
+   "port": 8391,
+   "impl": "adapter-kilocode",
+   "designRecord": "/components/adapter-kilocode-design",
+   "fixture": "kilocode.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [
+     "control.attention.respond"
+    ],
+    "answerable": [
+     "permission (dual surface; through 7.4.5: the held hook, typed text follows the AEP-0008 receiver rule, an option word counts as that option, unmatched free text applies the refusing status with guidance stream-visible only; from 7.4.6: options mirror the vendor reply enum once/always/reject verbatim and a reject's free text REACHES the vendor as the reply message)",
+     "form (questions, from 7.4.6)"
+    ],
+    "observedAttention": [],
+    "ackWindowMs": 10000,
+    "vendorCancel": null,
+    "toolDenied": null
+   },
+   "forms": "`question.asked` (from 7.4.6) → `attention.requested` kind `form` on the AskUserQuestion shape (index-id choices, vendor `custom` → `other`), answered end to end over `POST /question/{requestID}/reply`",
+   "steering": "the same bus surface as OpenCode, observation hooks only by the design record",
+   "headroom": "the vendor's event-model migration lands at 7.4.6 (verified against the shipped 7.4.11 binary; dual permission surface + the question form loop shipped 2026-07-20); `kilo serve` HTTP + SSE and a native OTLP export are documented second channels"
+  },
+  {
+   "id": "cline",
+   "name": "Cline",
+   "kind": "agent",
+   "channel": "typed subprocess hooks (`--hooks-dir`)",
+   "port": 8392,
+   "impl": "adapter-cline",
+   "designRecord": "/components/adapter-cline-design",
+   "fixture": "cline.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (hub approvals: `AEP_CLINE_HUB_CONTROL=1`; see the [design record](/components/adapter-cline-design))",
+     "`control.cancel` (scope `run` → hub `run.abort`, same gate)",
+     "`x.cline.control.send_input` (user-plane input, same gate)"
+    ],
+    "answerable": [
+     "permission (hub opt-in)"
+    ],
+    "observedAttention": [
+     "permission (tap-only mode, AEP_CLINE_HUB=1 without the control gate)"
+    ],
+    "ackWindowMs": 10000,
+    "vendorCancel": "`agent_abort` → `run.cancelled`; the opt-in `control.cancel` drives hub `run.abort`, and the same hook fact returns cause-linked to the command",
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "typed `SubprocessHookControl` fields (`overrideInput`, `appendMessages`, `systemPrompt`) exist and are never returned; hub `session.send_input` ships as the opt-in `x.cline.control.send_input`: user-plane input (delivery queue/steer), deliberately NOT `instruct`",
+   "headroom": "the hub approval loop, `run.abort`, and `session.send_input` are adopted opt-in (the design record); `session.fork`, `schedule.*`, and the hub's capability brokerage stay out of scope, stated"
+  },
+  {
+   "id": "hermes",
+   "name": "Hermes",
+   "kind": "agent",
+   "channel": "shell hooks: `command` shim",
+   "port": 8393,
+   "impl": "adapter-hermes",
+   "designRecord": "/components/adapter-hermes-design",
+   "fixture": "hermes.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (the held operator-deny gate on `pre_tool_call`: `AEP_HERMES_CONTROL=1`, scoped by `AEP_HERMES_GATE_TOOLS`; see the [design record](/components/adapter-hermes-design))",
+     "`x.hermes.control.instruct` (steering, `AEP_INSTRUCT=1`; see the [design record](/components/control-steering-design))"
+    ],
+    "answerable": [
+     "permission (control opt-in: the held tool gate; typed text follows the AEP-0008 receiver rule: an option word counts as that option, other free text is a deny with the text as the reason; the vendor's own approval gate stays observed read-only in every posture)"
+    ],
+    "observedAttention": [
+     "permission (the vendor's own gate, every posture; the card carries the vendor's four-way decision menu as `options` data and declares `respond_via: [oob]`, AEP-0008)",
+     "form (the `clarify` overlay: the ask AND the vendor-delivered answer both on the wire; `respond_via: [oob]`, AEP-0006)"
+    ],
+    "ackWindowMs": 10000,
+    "vendorCancel": "`on_session_end` `interrupted` → `run.cancelled`; no commanded cancel: no vendor cancel write exists on this surface (`control.cancel` not declared even under the gate)",
+    "toolDenied": "policy denies → `tool.denied` `by: policy`; a commanded operator deny rides the SAME pinned mapping (the vendor classes the block `plugin_block`) cause-linked to the command"
+   },
+   "forms": "SHIPPED observed: the `clarify` ask-the-user tool → `attention.requested` kind `form` (AEP-0006) beside the pinned tool trio, with `respond_via: [oob]`; no result-consuming hook exists on this surface, so the bus honestly cannot answer; the card mirrors the vendor's own entry-point choice normalization, and the vendor-delivered answer rides `attention.answered` via `oob` (a picked choice as its structural 1-based id; Other/open-ended as redacted-gated text); the vendor's timeout sentinels land `attention.timeout`, cancel/undeliverable/blocked/error resolve `dismissed` ([design record](/components/adapter-hermes-design))",
+   "steering": "SHIPPED opt-in: `x.hermes.control.instruct` queues text delivered through the vendor's own context injection: the `pre_llm_call` hook reply's `{\"context\": …}`, the ONE site the runtime consumes (joined into the user message at turn start), audited on the stream; delivery at latest on the next turn start, drop rides the real session end (`on_session_finalize`, never the per-turn `on_session_end`) ([design record](/components/control-steering-design))",
+   "headroom": "the TUI-gateway JSON-RPC stream with `approval.request` is a documented second channel (bridge-shaped, deferred); the vendor's own approval gate stays hook-unanswerable by design (pre-answering it is the one thing the vendor forbids; verified at the pin and on a live install: the approval hook dispatch discards results)"
+  },
+  {
+   "id": "antigravity",
+   "name": "Antigravity",
+   "kind": "agent",
+   "channel": "hooks: `hooks.json` command registration (event name as argv)",
+   "port": 8395,
+   "impl": "adapter-antigravity",
+   "designRecord": "/components/adapter-antigravity-design",
+   "fixture": "antigravity.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "answerable": [],
+    "observedAttention": [],
+    "ackWindowMs": null,
+    "vendorCancel": null,
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "`PreInvocation`/`PostInvocation` accept `injectSteps`; `Stop` can force continuation; never sent",
+   "headroom": "`PreToolUse` decisions (`allow`/`deny`/`ask`/`force_ask`) exist on the wire, but approval outcomes are not hook-visible: the gap that keeps this mapping observe-only"
+  },
+  {
+   "id": "pi",
+   "name": "pi",
+   "kind": "agent",
+   "channel": "in-process extension (per-event subscription)",
+   "port": 8396,
+   "impl": "adapter-pi",
+   "designRecord": "/components/adapter-pi-design",
+   "fixture": "pi.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (the held operator gate on the blockable `tool_call`: `AEP_PI_CONTROL=1`, scoped by `AEP_PI_GATE_TOOLS`; registration itself is the opt-in; see the [design record](/components/adapter-pi-design))"
+    ],
+    "answerable": [
+     "permission (control opt-in: the held tool gate; a deny rides the vendor's own block result and the observed skip stays the pinned tool.failed, never recast)"
+    ],
+    "observedAttention": [],
+    "ackWindowMs": 10000,
+    "vendorCancel": "`stop_reason: aborted` → `run.cancelled`; no commanded cancel: aborts belong to the client-owned process modes (`control.cancel` not declared even under the gate)",
+    "toolDenied": "none in any posture: a commanded operator deny lands as the pinned `tool.failed` cause-linked to the command (the bus does not distinguish blocked-from-failed; no recast)"
+   },
+   "forms": null,
+   "steering": "`--mode rpc` carries `steer`/`follow_up`/`abort`/`fork` and an extension-UI request/response sub-protocol: a client-owned process mode, not the adapter's channel",
+   "headroom": "mutable `tool_result` stays unregistered; the blockable `tool_call` is now the opt-in gate's one surface (the default posture registers neither); the fork's typed approval pair has not reached upstream: the named trigger, mapping to the attention pair plus whatever the bus emits for the skipped call"
+  },
+  {
+   "id": "agui",
+   "name": "AG-UI",
+   "kind": "protocol",
+   "channel": "HTTP tee proxy in front of any AG-UI agent",
+   "port": 4321,
+   "impl": "bridge-agui",
+   "designRecord": "/components/bridge-agui-design",
+   "fixture": "agui.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "answerable": [],
+    "observedAttention": [],
+    "ackWindowMs": 0,
+    "vendorCancel": null,
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": null,
+   "headroom": "the protocol is read-only by design: there is no control loop to claim"
+  },
+  {
+   "id": "acp",
+   "name": "ACP",
+   "kind": "protocol",
+   "channel": "stdio tee: the bridge IS the editor's agent command",
+   "port": 8394,
+   "impl": "bridge-acp",
+   "designRecord": "/components/bridge-acp-design",
+   "fixture": "acp.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "answerable": [],
+    "observedAttention": [
+     "permission"
+    ],
+    "ackWindowMs": 0,
+    "vendorCancel": "`stopReason: cancelled` → `run.cancelled`",
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": null,
+   "headroom": "byte-transparency outranks everything: the tee never injects; the ACP v2 RFD track (permission-request shape) is the standing watch"
+  },
+  {
+   "id": "openhands",
+   "name": "OpenHands",
+   "kind": "protocol",
+   "channel": "WebSocket observer on the agent server's events socket",
+   "port": 8397,
+   "impl": "bridge-openhands",
+   "designRecord": "/components/bridge-openhands-design",
+   "fixture": "openhands.json",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (answerable confirmation: `AEP_OPENHANDS_CONTROL=1`; see the [design record](/components/bridge-openhands-design))",
+     "`control.pause` (→ the vendor's own lifecycle pause, honored only from `running`, same gate)",
+     "`control.resume` (→ the vendor's run call, honored only from `paused`; refused where it would start work or bypass a pending confirmation, same gate)",
+     "`x.openhands.control.send_input` (user-plane input appended as a user message, the vendor run flag pinned false: never a run trigger, never an implicit approval; no status guard, same gate)",
+     "`x.openhands.control.interrupt` (the escalated pause: instant, resumable; honored only from `running`, elsewhere the vendor falls back to a pause no-op and the command is refused, same gate)"
+    ],
+    "answerable": [
+     "permission (control opt-in)"
+    ],
+    "observedAttention": [
+     "permission (default posture)"
+    ],
+    "ackWindowMs": 10000,
+    "vendorCancel": "status transition `deleting` → `run.cancelled`; no commanded cancel: no vendor write terminates a run (`control.cancel` deliberately not declared even under the gate)",
+    "toolDenied": "hook-sourced `UserRejectObservation` → `tool.denied` (`by: policy`); a user-sourced rejection stays vendor-scoped (a human decision, not a policy block)"
+   },
+   "forms": null,
+   "steering": "the events socket is read-write and the REST API carries `respond_to_confirmation`, lifecycle pause/run, the message append, and `/interrupt`; never-send is the DEFAULT posture (the auth frame is the only socket write, ever); `AEP_OPENHANDS_CONTROL=1` inverts it for exactly five REST writes, and the socket stays auth-frame-only either way. User-plane input rides `x.openhands.control.send_input` (an appended user message, run flag pinned false): the Cline-class divergence, deliberately outside the convergent `instruct` corpus per the [steering record](/components/control-steering-design)",
+   "headroom": "the approval loop, pause/resume, user-plane send-input, and the interrupt escalation all ship on the opt-in control channel; remaining: the webhook second channel"
+  },
+  {
+   "id": "otlp-in",
+   "name": "OTel inbound",
+   "kind": "protocol",
+   "channel": "OTLP/HTTP receiver (`POST /v1/logs`, JSON encoding)",
+   "port": 4319,
+   "impl": "bridge-otlp-in",
+   "designRecord": "/components/bridge-otlp-inbound-design",
+   "fixture": "codex-otel.json",
+   "fixtureNote": "two vendor profiles ride one receiver: Codex's native OTel log export (`codex-otel.json`, the default) and the VS Code agent's `copilot_chat.*` LogRecord family (`--vendor vscode`, `vscode-otel.json`); one vendor per process, each with its own pure mapper",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "answerable": [],
+    "observedAttention": [],
+    "ackWindowMs": null,
+    "vendorCancel": null,
+    "toolDenied": "`tool_decision` deny records → `tool.denied`"
+   },
+   "forms": null,
+   "steering": null,
+   "headroom": "companion/primary dedup keeps the hook adapter authoritative when both channels observe the same session"
+  },
+  {
+   "id": "opencode-sse",
+   "name": "OpenCode SSE",
+   "kind": "protocol",
+   "channel": "SSE client on a running OpenCode server's event stream",
+   "port": 4320,
+   "impl": "bridge-opencode-sse",
+   "designRecord": "/components/adapter-opencode-design",
+   "fixture": "opencode.json",
+   "fixtureScope": {
+    "include": [
+     "sse_modes"
+    ]
+   },
+   "fixtureNote": "pinned by the `sse_modes` table in the OpenCode fixture file (companion and primary postures)",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (answerable permission in the vendor's own `once`/`always`/`reject` vocabulary: `AEP_OPENCODE_SSE_CONTROL=1`, primary mode only; see the [design record](/components/adapter-opencode-design))",
+     "`control.cancel` (scope `run` → the server's own `session.abort`; the vendor's idle boundary closes the synthesized run as `run.cancelled` cause-linked, same gate)"
+    ],
+    "answerable": [
+     "permission (control opt-in, primary mode)"
+    ],
+    "observedAttention": [
+     "permission (default posture, primary mode)"
+    ],
+    "ackWindowMs": 10000,
+    "vendorCancel": "the opt-in `control.cancel` drives the server's `session.abort` (a true activation terminal on this channel); without a command in flight the idle boundary stays a plain `run.finished`",
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "the SSE stream is read-only by construction and stays so; `AEP_OPENCODE_SSE_CONTROL=1` (primary mode) pairs it with exactly two REST writes: the permission reply and `session.abort`; the server's prompt/command routes (user-plane driving) stay out of scope, stated",
+   "headroom": "the REST control channel ships opt-in (primary mode; the record's own natural actuator); remaining: the typed v2 question/permission surface (a named watch, not plugin- or stream-exposed at 1.18.3); the Kilo SSE twin ships as its own channel, the bus union verified byte-identical at `@kilocode/sdk` 7.4.11 vs 1.18.3"
+  },
+  {
+   "id": "kilocode-sse",
+   "name": "Kilo Code SSE",
+   "kind": "protocol",
+   "channel": "SSE client on a running Kilo server's event stream (`kilo serve`)",
+   "port": 4322,
+   "impl": "bridge-kilocode-sse",
+   "designRecord": "/components/adapter-kilocode-design",
+   "fixture": "kilocode.json",
+   "fixtureScope": {
+    "include": [
+     "sse_modes"
+    ]
+   },
+   "fixtureNote": "pinned by the `sse_modes` table in the Kilo Code fixture file (companion and primary postures; the OpenCode channel mirrored on `x.kilocode.*`; the bus union byte-identical at the re-verified pins)",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (answerable permission in the vendor's own `once`/`always`/`reject` vocabulary: `AEP_KILOCODE_SSE_CONTROL=1`, primary mode only; the REST routes are byte-identical to OpenCode's at the re-verified pins)",
+     "`control.cancel` (scope `run` → the server's own `session.abort`; the vendor's idle boundary closes the synthesized run as `run.cancelled` cause-linked, same gate)"
+    ],
+    "answerable": [
+     "permission (control opt-in, primary mode)"
+    ],
+    "observedAttention": [
+     "permission (default posture, primary mode)"
+    ],
+    "ackWindowMs": 10000,
+    "vendorCancel": "the opt-in `control.cancel` drives the server's `session.abort` (a true activation terminal on this channel); without a command in flight the idle boundary stays a plain `run.finished`",
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "the SSE stream is read-only by construction and stays so; `AEP_KILOCODE_SSE_CONTROL=1` (primary mode) pairs it with exactly two REST writes: the permission reply and `session.abort`; the server's prompt/command routes (user-plane driving) stay out of scope, stated",
+   "headroom": "the fork twin of the OpenCode SSE channel, shipped with the same two-mode discipline and the same opt-in control pair; remaining: the typed v2 question/permission surface (the shared named watch) and live validation alongside the plugin channel's"
+  },
+  {
+   "id": "kimi-code-web",
+   "name": "Kimi web (kap-server)",
+   "kind": "protocol",
+   "channel": "WS client on a running kap-server event stream (`kimi web`; REST /api/v1 + WS /api/v1/ws, bearer subprotocol)",
+   "port": 4323,
+   "impl": "bridge-kimi-code-web",
+   "designRecord": "/components/adapter-kimi-code-design",
+   "fixture": "kimi-code.json",
+   "fixtureScope": {
+    "include": [
+     "ws_modes"
+    ]
+   },
+   "fixtureNote": "pinned by the `ws_modes` table in the Kimi Code fixture file (companion and primary postures; lifecycle/approval shapes oracle-captured from the shipped 0.28.1, the question loop source-derived and labeled)",
+   "validation": "fixture",
+   "control": {
+    "accepts": [],
+    "optInAccepts": [
+     "`control.attention.respond` (answerable approval in the vendor's own `approved`/`rejected` decision vocabulary, free text as `feedback`: `AEP_KIMI_WEB_CONTROL=1`, primary mode only; POST /api/v1/sessions/{sid}/approvals/{approval_id}, outcome riding the vendor's own `event.approval.resolved` broadcast)",
+     "`control.cancel` (scope `run` → the vendor session abort, a non-destructive active-work terminal; the `turn.ended` reason \"cancelled\" boundary closes the run cause-linked, same gate)"
+    ],
+    "answerable": [
+     "permission (control opt-in, primary mode: approvals only; question answering is deferred, reason recorded)"
+    ],
+    "observedAttention": [
+     "permission (default posture, primary mode: the wire approval loop observed read-only)",
+     "form (default posture, primary mode: the question loop presented read-only on the field_spec shape)"
+    ],
+    "ackWindowMs": 10000,
+    "vendorCancel": "the opt-in `control.cancel` drives the vendor session abort; the vendor's own `turn.ended` reason \"cancelled\" is the boundary that closes the run; without a command in flight the same boundary maps to a plain `run.cancelled` (the channel does not know who cancelled)",
+    "toolDenied": null
+   },
+   "forms": null,
+   "steering": "the WS stream is read-only by construction and stays so; `AEP_KIMI_WEB_CONTROL=1` (primary mode) pairs it with exactly two REST writes: the approval decision and the session abort; the prompt submit/steer routes (user-plane driving) stay out of scope, stated",
+   "headroom": "reaches kap-hosted (`kimi web`) sessions ONLY: the terminal TUI runs in-process with no server surface (unreachable by vendor design, recorded unsupported); remaining: question-answer actuation (the per-item id round-trip), instance-registry discovery of multiple servers, and live validation against a real `kimi web` session"
+  }
+ ]
+}

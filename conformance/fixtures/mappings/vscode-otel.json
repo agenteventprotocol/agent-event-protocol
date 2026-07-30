@@ -1,0 +1,253 @@
+{
+ "$comment": "AEP-0002 Annex A machine-usable fixture for the VS Code agent OTel-inbound channel (design record: the spec repo docs/components/bridge-otlp-inbound-design.md, the second-vendor profile decision). Each entry pins the pure record->event mapping over FLATTENED attributes at the default metadata ceiling, in BOTH modes: companion (the default \u2014 everything in the channel-visible x.vscode.otel.* family, core types never emitted; the hook adapter stays the sole core-type authority) and primary (hook-less deployments \u2014 the core subset: the session frame plus tool-call outcomes; the hook decision tier never reaches this channel, so tool.denied is NEVER emitted here, and session end does not exist on this vendor surface, so session.ended is never synthesized). Resource/attribute keys follow the vendor source read at the pinned tag; values are representative and refined at live validation. Envelope identity (resource session.id -> session, agent vscode, no runs synthesized) is receiver wiring, pinned by the reference smoke.",
+ "identity": {
+  "session_from": "resource:session.id",
+  "run_from": null,
+  "$comment": "the vendor stamps session.id at the OTel RESOURCE level (one session per exporter process); runs are deliberately not synthesized \u2014 async export pipelines cannot pair run boundaries honestly (the established design rule)"
+ },
+ "records": {
+  "session_start": {
+   "input": {
+    "resource": {
+     "service.name": "copilot-chat",
+     "service.version": "0.37.0",
+     "session.id": "vsc_fix_1"
+    },
+    "attributes": {
+     "event.name": "copilot_chat.session.start",
+     "session.id": "vsc_fix_1",
+     "gen_ai.request.model": "gpt-5.2",
+     "gen_ai.agent.name": "agent"
+    }
+   },
+   "companion": {
+    "type": "x.vscode.otel.session.start",
+    "data": {
+     "gen_ai.request.model": "gpt-5.2",
+     "gen_ai.agent.name": "agent"
+    }
+   },
+   "primary": {
+    "type": "session.started",
+    "data": {
+     "client": {
+      "name": "vscode"
+     },
+     "gen_ai.request.model": "gpt-5.2"
+    }
+   }
+  },
+  "tool_call_ok": {
+   "input": {
+    "resource": {
+     "service.name": "copilot-chat",
+     "service.version": "0.37.0",
+     "session.id": "vsc_fix_1"
+    },
+    "attributes": {
+     "event.name": "copilot_chat.tool.call",
+     "gen_ai.tool.name": "readFile",
+     "duration_ms": 63,
+     "success": true
+    }
+   },
+   "companion": {
+    "type": "x.vscode.otel.tool.call",
+    "data": {
+     "gen_ai.tool.name": "readFile",
+     "duration_ms": 63,
+     "success": true
+    }
+   },
+   "primary": {
+    "type": "tool.completed",
+    "data": {
+     "tool": {
+      "name": "readFile"
+     },
+     "duration_ms": 63
+    },
+    "subject": "readFile"
+   }
+  },
+  "tool_call_fail": {
+   "input": {
+    "resource": {
+     "service.name": "copilot-chat",
+     "service.version": "0.37.0",
+     "session.id": "vsc_fix_1"
+    },
+    "attributes": {
+     "event.name": "copilot_chat.tool.call",
+     "gen_ai.tool.name": "runInTerminal",
+     "duration_ms": 842,
+     "success": false,
+     "error.type": "ToolCallError"
+    }
+   },
+   "companion": {
+    "type": "x.vscode.otel.tool.call",
+    "data": {
+     "gen_ai.tool.name": "runInTerminal",
+     "duration_ms": 842,
+     "success": false,
+     "error.type": "ToolCallError"
+    }
+   },
+   "primary": {
+    "type": "tool.failed",
+    "data": {
+     "tool": {
+      "name": "runInTerminal"
+     },
+     "error": {
+      "type": "ToolCallError"
+     },
+     "duration_ms": 842
+    },
+    "subject": "runInTerminal",
+    "$comment": "the profile's core value: the vendor's own error.type token (the OTel error.type semantic convention, a low-cardinality class, structural at metadata), never free text"
+   }
+  },
+  "agent_turn": {
+   "input": {
+    "resource": {
+     "service.name": "copilot-chat",
+     "service.version": "0.37.0",
+     "session.id": "vsc_fix_1"
+    },
+    "attributes": {
+     "event.name": "copilot_chat.agent.turn",
+     "turn.index": 2,
+     "gen_ai.usage.input_tokens": 1204,
+     "gen_ai.usage.output_tokens": 388,
+     "tool_call_count": 3
+    }
+   },
+   "companion": {
+    "type": "x.vscode.otel.agent.turn",
+    "data": {
+     "turn.index": 2,
+     "gen_ai.usage.input_tokens": 1204,
+     "gen_ai.usage.output_tokens": 388,
+     "tool_call_count": 3
+    }
+   },
+   "primary": {
+    "type": "x.vscode.otel.agent.turn",
+    "data": {
+     "turn.index": 2,
+     "gen_ai.usage.input_tokens": 1204,
+     "gen_ai.usage.output_tokens": 388,
+     "tool_call_count": 3
+    }
+   },
+   "$comment": "vendor-namespaced in BOTH modes: no run identity exists on this channel (runs deliberately not synthesized), so turn boundaries are honest visibility, never a core moment"
+  },
+  "inference_details": {
+   "input": {
+    "resource": {
+     "service.name": "copilot-chat",
+     "service.version": "0.37.0",
+     "session.id": "vsc_fix_1"
+    },
+    "attributes": {
+     "event.name": "gen_ai.client.inference.operation.details",
+     "gen_ai.operation.name": "chat",
+     "gen_ai.request.model": "gpt-5.2",
+     "gen_ai.usage.input_tokens": 1204,
+     "gen_ai.usage.output_tokens": 388,
+     "gen_ai.input.messages": "[{\"role\":\"user\",\"content\":\"build the annex\"}]"
+    }
+   },
+   "companion": {
+    "type": "x.vscode.otel.inference_details",
+    "data": {
+     "gen_ai.operation.name": "chat",
+     "gen_ai.request.model": "gpt-5.2",
+     "gen_ai.usage.input_tokens": 1204,
+     "gen_ai.usage.output_tokens": 388
+    }
+   },
+   "primary": {
+    "type": "x.vscode.otel.inference_details",
+    "data": {
+     "gen_ai.operation.name": "chat",
+     "gen_ai.request.model": "gpt-5.2",
+     "gen_ai.usage.input_tokens": 1204,
+     "gen_ai.usage.output_tokens": 388
+    }
+   },
+   "$comment": "the OTel GenAI standard inference record; gen_ai.input.messages is capture-gated redacted+ and therefore ABSENT from the metadata-ceiling pins (the gate visible in the fixture)"
+  },
+  "edit_feedback": {
+   "input": {
+    "resource": {
+     "service.name": "copilot-chat",
+     "service.version": "0.37.0",
+     "session.id": "vsc_fix_1"
+    },
+    "attributes": {
+     "event.name": "copilot_chat.edit.feedback",
+     "outcome": "accepted",
+     "language_id": "typescript",
+     "participant": "agent",
+     "request_id": "req_fix_1",
+     "edit_surface": "panel",
+     "has_remaining_edits": false,
+     "is_notebook": false
+    }
+   },
+   "companion": {
+    "type": "x.vscode.otel.edit.feedback",
+    "data": {
+     "outcome": "accepted",
+     "language_id": "typescript",
+     "participant": "agent",
+     "request_id": "req_fix_1",
+     "edit_surface": "panel",
+     "has_remaining_edits": false,
+     "is_notebook": false
+    }
+   },
+   "primary": {
+    "type": "x.vscode.otel.edit.feedback",
+    "data": {
+     "outcome": "accepted",
+     "language_id": "typescript",
+     "participant": "agent",
+     "request_id": "req_fix_1",
+     "edit_surface": "panel",
+     "has_remaining_edits": false,
+     "is_notebook": false
+    }
+   }
+  }
+ },
+ "unknown": {
+  "input": {
+   "resource": {
+    "service.name": "copilot-chat",
+    "service.version": "0.37.0",
+    "session.id": "vsc_fix_1"
+   },
+   "attributes": {
+    "event.name": "copilot_chat.something_new",
+    "detail": "x"
+   }
+  },
+  "companion": {
+   "type": "x.vscode.otel.unknown",
+   "data": {
+    "event.name": "copilot_chat.something_new"
+   }
+  },
+  "primary": {
+   "type": "x.vscode.otel.unknown",
+   "data": {
+    "event.name": "copilot_chat.something_new"
+   }
+  },
+  "$comment": "foreign/future records: never guessed at, in either mode"
+ }
+}

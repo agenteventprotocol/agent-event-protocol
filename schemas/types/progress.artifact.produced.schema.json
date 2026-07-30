@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/progress.artifact.produced.schema.json",
+  "title": "AEP payload: progress.artifact.produced",
+  "type": "object",
+  "properties": {
+    "artifact": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "name": {
+          "type": "string",
+          "x-aep-capture": "redacted"
+        },
+        "mime": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "x-aep-capture": "metadata"
+        },
+        "uri": {
+          "type": "string",
+          "x-aep-capture": "redacted"
+        }
+      },
+      "x-aep-capture": "metadata"
+    }
+  }
+}

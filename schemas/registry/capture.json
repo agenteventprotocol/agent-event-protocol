@@ -1,0 +1,5 @@
+{
+  "$comment": "AEP-0001 §8.2 capture levels, ordered none < metadata < redacted < full.",
+  "order": ["none", "metadata", "redacted", "full"],
+  "default": "metadata"
+}

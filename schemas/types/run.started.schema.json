@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/run.started.schema.json",
+  "title": "AEP payload: run.started",
+  "type": "object",
+  "properties": {
+    "trigger": {
+      "enum": [
+        "user",
+        "schedule",
+        "agent",
+        "control",
+        "resume"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "prompt": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "gen_ai.usage.input_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "gen_ai.usage.output_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string",
+          "x-aep-capture": "metadata"
+        },
+        "total": {
+          "type": "number",
+          "minimum": 0,
+          "x-aep-capture": "metadata"
+        },
+        "prompt": {
+          "type": "number",
+          "minimum": 0,
+          "x-aep-capture": "metadata"
+        },
+        "completion": {
+          "type": "number",
+          "minimum": 0,
+          "x-aep-capture": "metadata"
+        },
+        "cache": {
+          "type": "number",
+          "minimum": 0,
+          "x-aep-capture": "metadata"
+        },
+        "reasoning": {
+          "type": "number",
+          "minimum": 0,
+          "x-aep-capture": "metadata"
+        }
+      },
+      "required": [
+        "currency"
+      ],
+      "x-aep-capture": "metadata"
+    }
+  }
+}

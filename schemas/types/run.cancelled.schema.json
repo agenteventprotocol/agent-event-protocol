@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/run.cancelled.schema.json",
+  "title": "AEP payload: run.cancelled",
+  "type": "object",
+  "properties": {
+    "by": {
+      "enum": [
+        "user",
+        "control",
+        "policy",
+        "shutdown"
+      ],
+      "x-aep-capture": "metadata"
+    },
+    "reason": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "x-aep-capture": "metadata"
+    }
+  }
+}

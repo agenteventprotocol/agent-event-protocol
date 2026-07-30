@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aep://schemas/0.1/types/assessment.evaluation.recorded.schema.json",
+  "title": "AEP payload: assessment.evaluation.recorded",
+  "type": "object",
+  "properties": {
+    "gen_ai.evaluation.name": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "gen_ai.evaluation.score.value": {
+      "type": "number",
+      "x-aep-capture": "metadata"
+    },
+    "gen_ai.evaluation.score.label": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    },
+    "gen_ai.evaluation.explanation": {
+      "type": "string",
+      "x-aep-capture": "redacted"
+    },
+    "evaluator": {
+      "type": "string",
+      "x-aep-capture": "metadata"
+    }
+  }
+}
