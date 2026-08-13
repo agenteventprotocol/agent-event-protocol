@@ -17,7 +17,7 @@ In brief, from [VERSIONING.md](VERSIONING.md): the protocol version
 (`aep: "0.1"`) names the spec set, schemas, and conformance fixtures as one
 unit and tags as `v0.1`, `v0.2`, … in this repository. Pre-1.0, each `0.x`
 minor is the breaking boundary and there are no protocol patch releases.
-The packages (`@aep/sdk`, `agenteventprotocol`) version independently under
+The packages (`@agenteventprotocol/sdk`, `agenteventprotocol`) version independently under
 SemVer 2.0.0 and **declare** which protocol version(s) they implement;
 package tags live in their own repositories. Nothing in the procedure below
 changes that policy.
@@ -35,7 +35,7 @@ contributor but is verified before tagging.
 2. Bridge round-trips (AEP-0005), scope, and schema-generated SDK types are
    re-confirmed on the tag candidate.
 3. `./ci.sh` green on a fresh clone.
-4. Registry availability confirmed **[M]**: npm `@aep` scope, PyPI `agenteventprotocol`,
+4. Registry availability confirmed **[M]**: npm `@agenteventprotocol` scope, PyPI `agenteventprotocol`,
    and the GitHub organization.
 
 **Release steps:**

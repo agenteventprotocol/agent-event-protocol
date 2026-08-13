@@ -20,7 +20,7 @@ AEP deliberately runs two version tracks, and they are **not** coupled:
    event). One version names the spec set, the schemas, and the conformance
    fixtures as a unit.
 2. **Package versions**: ordinary [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html)
-   for the published packages (`@aep/sdk` on npm, `agenteventprotocol` on PyPI),
+   for the published packages (`@agenteventprotocol/sdk` on npm, `agenteventprotocol` on PyPI),
    decoupled from the protocol version.
 
 Coupling them would force a package release for every spec release and

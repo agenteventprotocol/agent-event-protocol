@@ -11,7 +11,7 @@ repositories:
 
 - Reference stack (relay, CLI, adapters, bridges, MCP server, demo):
   [`agenteventprotocol/reference`](https://github.com/agenteventprotocol/reference)
-- TypeScript SDK (`@aep/sdk`): [`agenteventprotocol/typescript-sdk`](https://github.com/agenteventprotocol/typescript-sdk)
+- TypeScript SDK (`@agenteventprotocol/sdk`): [`agenteventprotocol/typescript-sdk`](https://github.com/agenteventprotocol/typescript-sdk)
 - Python SDK (`agenteventprotocol`): [`agenteventprotocol/python-sdk`](https://github.com/agenteventprotocol/python-sdk)
 
 ## Ground rules

@@ -6,7 +6,7 @@ audience: builder
 spec-refs: [AEP-0001, AEP-0003, AEP-0004]
 ---
 
-`@aep/sdk` provides emit/consume/control helpers over the schema-generated
+`@agenteventprotocol/sdk` provides emit/consume/control helpers over the schema-generated
 envelope and payload types
 ([README](https://github.com/agenteventprotocol/typescript-sdk)). File paths below are relative to
 the [typescript-sdk](https://github.com/agenteventprotocol/typescript-sdk) repository root.
@@ -15,7 +15,7 @@ the [typescript-sdk](https://github.com/agenteventprotocol/typescript-sdk) repos
 
 It's a **local, unpublished package**: `private: true` in
 [package.json](https://github.com/agenteventprotocol/typescript-sdk) until the v0.1 tag, so you
-use it from a clone, not `npm install @aep/sdk`.
+use it from a clone, not `npm install @agenteventprotocol/sdk`.
 
 </Note>
 
@@ -51,7 +51,7 @@ once per session to get a `SessionEmitter` that owns that session's
 ([src/emit.ts](https://github.com/agenteventprotocol/typescript-sdk)):
 
 ```ts
-import { Emitter, wsTransport } from '@aep/sdk';
+import { Emitter, wsTransport } from '@agenteventprotocol/sdk';
 
 const t = wsTransport('http://127.0.0.1:8787', { agent: 'my-agent', host: 'host-1' });
 const emitter = new Emitter({ agent: 'my-agent', host: 'host-1', sink: t.sink, epoch: 1 });
@@ -78,7 +78,7 @@ compile time.
 ([src/consume.ts](https://github.com/agenteventprotocol/typescript-sdk)):
 
 ```ts
-import { subscribe } from '@aep/sdk';
+import { subscribe } from '@agenteventprotocol/sdk';
 
 const sub = subscribe({
   url: 'http://127.0.0.1:8787',
@@ -105,7 +105,7 @@ locally synthesized ack-window timeout); see
 [src/control.ts](https://github.com/agenteventprotocol/typescript-sdk):
 
 ```ts
-import { ControlClient, NackError } from '@aep/sdk';
+import { ControlClient, NackError } from '@agenteventprotocol/sdk';
 
 const ctl = new ControlClient({ url: 'http://127.0.0.1:8787', agent: 'phone', host: 'host-1' });
 

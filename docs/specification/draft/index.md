@@ -34,6 +34,6 @@ Statuses are defined in AEP-0001 §13, and the process in
 [`../GOVERNANCE.md`](/community/governance), including the stability, deprecation,
 and graduation policy in its §5. The suite is pre-`v0.1`: no compatibility
 obligation exists before the first tag ([`../RELEASING.md`](https://github.com/agenteventprotocol/agent-event-protocol/blob/main/RELEASING.md)
-§1). The protocol name is **AEP**, with `dev.aep.`, `aep://`, and `@aep/*` as
+§1). The protocol name is **AEP**, with `dev.aep.`, `aep://`, and `@agenteventprotocol/*` as
 real identifiers. Prose is [CC-BY 4.0](https://github.com/agenteventprotocol/agent-event-protocol/tree/main/spec/LICENSE); new proposals start from
 [`AEP-TEMPLATE.md`](https://github.com/agenteventprotocol/agent-event-protocol/blob/main/spec/AEP-TEMPLATE.md).

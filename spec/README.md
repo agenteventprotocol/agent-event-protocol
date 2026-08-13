@@ -22,6 +22,6 @@ Statuses are defined in AEP-0001 §13, and the process in
 [`../GOVERNANCE.md`](../GOVERNANCE.md), including the stability, deprecation,
 and graduation policy in its §5. The suite is pre-`v0.1`: no compatibility
 obligation exists before the first tag ([`../RELEASING.md`](../RELEASING.md)
-§1). The protocol name is **AEP**, with `dev.aep.`, `aep://`, and `@aep/*` as
+§1). The protocol name is **AEP**, with `dev.aep.`, `aep://`, and `@agenteventprotocol/*` as
 real identifiers. Prose is [CC-BY 4.0](LICENSE); new proposals start from
 [`AEP-TEMPLATE.md`](AEP-TEMPLATE.md).

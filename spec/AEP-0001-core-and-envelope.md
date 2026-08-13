@@ -20,7 +20,7 @@
 
 This document defines the purpose, scope, layered architecture, and event **envelope**
 of the Agent Events Protocol (**AEP**: working title; all identifiers using the
-`AEP` / `dev.aep.` / `@aep/*` roots are placeholders frozen at the naming decision).
+`AEP` / `dev.aep.` / `@agenteventprotocol/*` roots are placeholders frozen at the naming decision).
 AEP is an open, vendor-neutral protocol for **agent activity events and control**: any
 agent emits lifecycle, progress, tool, resource, error, and attention events once
 (over stdio, HTTP, SSE, or WebSocket), and any monitor, history store, notifier,
