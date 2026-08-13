@@ -22,7 +22,7 @@ CloudEvents and OpenTelemetry shops are served by **normative day-one bridges**
 > **Status: pre-release.** The specifications are v0.1 under the AEP process;
 > each document's status (Draft or Accepted) is listed in
 > [Specifications](#specifications) below. Identifiers (`dev.aep.` type root,
-> `aep://` scheme, `@agenteventprotocol/*` / `agenteventprotocol` package names) are final; nothing is
+> `aep://` scheme, `@agenteventprotocol/*` / `agenteventprotocol-sdk` package names) are final; nothing is
 > published to any registry yet.
 
 ## The envelope in one glance
@@ -81,7 +81,7 @@ The runnable code that implements this standard lives in sibling repositories:
 | [reference](https://github.com/agenteventprotocol/reference) | The runnable reference stack: the relay, the `aep` CLI (observe, capture, replay, validate, diagnose, answer/cancel), twelve agent adapters, CloudEvents/OTLP outbound and six inbound capture bridges, an MCP server, and a one-command five-beat demo. CI self-certifies two conformance classes (collector and control-capable target) against this repo's own live checker |
 | [mission-control](https://github.com/agenteventprotocol/mission-control) | Mission Control, the fleet operator console: several relays in one window, live session lanes, an attention inbox with tap-to-respond, run cancel with stream-settled outcomes, replay and causal graphs; self-certifies the consumer conformance class from the golden corpus in CI |
 | [typescript-sdk](https://github.com/agenteventprotocol/typescript-sdk) | `@agenteventprotocol/sdk`: emit/consume/control helpers (sender and target sides) over the generated types |
-| [python-sdk](https://github.com/agenteventprotocol/python-sdk) | `agenteventprotocol` (PyPI): the same, for Python, sync and asyncio |
+| [python-sdk](https://github.com/agenteventprotocol/python-sdk) | `agenteventprotocol-sdk` (PyPI): the same, for Python, sync and asyncio |
 
 ## Specifications
 
