@@ -6,7 +6,7 @@ audience: builder
 spec-refs: [AEP-0001, AEP-0003, AEP-0004]
 ---
 
-`aep-sdk` provides emit/consume/control helpers over the schema-generated
+`agenteventprotocol` provides emit/consume/control helpers over the schema-generated
 pydantic v2 types ([README](https://github.com/agenteventprotocol/python-sdk)). File paths below are
 relative to the [python-sdk](https://github.com/agenteventprotocol/python-sdk) repository root.
 

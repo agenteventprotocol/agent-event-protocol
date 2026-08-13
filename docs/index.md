@@ -40,7 +40,7 @@ for the control profile.
 **Status: pre-release.** The specifications are v0.1; the
 [specification index](/specification/draft) lists each document's status
 (Draft or Accepted). Identifiers (the `dev.aep.` type root, the `aep://`
-scheme, the `@aep/*` and `aep-sdk` package names) are settled; nothing is
+scheme, the `@aep/*` and `agenteventprotocol` package names) are settled; nothing is
 published to any registry yet.
 
 </Info>
@@ -154,7 +154,7 @@ Emit, consume, and control with `@aep/sdk`
 
 <Card title="Python SDK" icon="code" href="/guides/sdk-python">
 
-The same with `aep-sdk`, sync and asyncio
+The same with `agenteventprotocol`, sync and asyncio
 
 </Card>
 
@@ -208,7 +208,7 @@ conformance classes in CI against this repository's checker.
 | [reference](https://github.com/agenteventprotocol/reference) | The runnable reference stack: relay, `aep` CLI, adapters, bridges, MCP server, demo |
 | [mission-control](https://github.com/agenteventprotocol/mission-control) | Fleet operator console: live session lanes, attention inbox, replay, causal graphs |
 | [typescript-sdk](https://github.com/agenteventprotocol/typescript-sdk) | `@aep/sdk`: emit, consume, and control helpers over the generated types |
-| [python-sdk](https://github.com/agenteventprotocol/python-sdk) | `aep-sdk`: the same for Python, sync and asyncio |
+| [python-sdk](https://github.com/agenteventprotocol/python-sdk) | `agenteventprotocol`: the same for Python, sync and asyncio |
 
 Which runtimes are covered today, and what each one exposes, is tracked in
 [supported agents](/agents) and [vendor surfaces](/vendor-surfaces). How the
